@@ -60,17 +60,23 @@
 
 > 前提：DSH 0.2.x（桌面端或 Web 端均可）。
 
-**方式 1 · 插件市场**（推荐）
-插件市场里搜索 `dsh-prompt-chain`（或「提示词增强」）→ 安装 → **完全退出 DSH 再打开**。
+**方式 1 · 命令行**（推荐）
+```bash
+dsh plugin add dsh-prompt-chain
+```
+装完 **完全退出 DSH 再打开**。
 
-**方式 2 · 下载 tgz 安装**
+**方式 2 · 插件市场**
+插件市场里搜索 `dsh-prompt-chain`（或「提示词链」）→ 安装 → 完全退出 DSH 再打开。
+
+**方式 3 · 下载 tgz 安装**（不想用 npm 时）
 在 [Releases](https://github.com/Nihao7-L/dsh-prompt-chain/releases/latest) 下载 `dsh-prompt-chain.tgz`，然后：
 ```bash
 dsh plugin add .\dsh-prompt-chain.tgz
 ```
 或者打开 DSH 的插件页 →「从本地安装」→ 选这个 tgz。
 
-**方式 3 · 从源码目录安装**（本地开发时）
+**方式 4 · 从源码目录安装**（本地开发时）
 ```powershell
 cd C:\Users\<你>\.dsh\profiles\desktop
 pnpm add "dsh-prompt-chain=file:D:/你的路径/dsh-prompt-chain"

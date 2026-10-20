@@ -60,7 +60,13 @@
 
 Requires DSH 0.2.x (desktop or web).
 
-**Plugin market** — search `dsh-prompt-chain`, install, then **fully quit and reopen DSH**.
+**Command line** (recommended)
+```bash
+dsh plugin add dsh-prompt-chain
+```
+Then **fully quit and reopen DSH**.
+
+**Plugin market** — search `dsh-prompt-chain`, install, then fully quit and reopen DSH.
 
 **Download the tarball** (no npm)
 Grab `dsh-prompt-chain.tgz` from [Releases](https://github.com/Nihao7-L/dsh-prompt-chain/releases/latest), then:

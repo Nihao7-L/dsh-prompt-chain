@@ -31,6 +31,10 @@
   ],
   "author": "Nihao7-L",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "homepage": "https://github.com/Nihao7-L/dsh-prompt-chain#readme",
   "repository": {
     "type": "git",
