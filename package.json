@@ -1,6 +1,6 @@
 {
   "name": "dsh-prompt-chain",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "description": "One-click prompt rewriting in the DSH composer — keep going for up to 5 rounds, diff every change, and jump back to any version.",
   "main": "./index.js",
@@ -58,7 +58,7 @@
     }
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "^4.0.2",
-    "@deepseek-ai/dsh-llm": "^0.1.2-rc.1 || ^0.1.7-rc.2 || ^0.2.0-rc.1"
+    "@deepseek-ai/cordis": ">=4.0.1-rc.1 <5.0.0-0",
+    "@deepseek-ai/dsh-llm": ">=0.1.0-rc.2 <0.1.2-rc.1 || >=0.1.2-rc.1 <0.2.0 || >=0.2.0-rc.1 <0.3.0 || >=0.2.1-rc.1 <0.3.0"
   }
 }
