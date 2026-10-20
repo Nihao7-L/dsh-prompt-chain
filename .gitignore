@@ -1,0 +1,25 @@
+# 依赖与产物
+node_modules/
+*.tgz
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+# 编辑器
+.idea/
+.vscode/
+
+# 只在本地维护的文档，不随仓库发布
+PUBLISHING.md
+RELEASE-STEPS.md
+BLOG-CSDN.md
+
+# 开发自用的临时材料
+_shots/
+_grid/
+_chk/
+_drafts/
+_profile-backup-*/
+_*.mjs
+_*.py

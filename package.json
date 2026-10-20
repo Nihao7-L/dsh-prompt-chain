@@ -1,0 +1,60 @@
+{
+  "name": "dsh-prompt-chain",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "在 DSH 输入框里一键把草稿改写成结构清晰的提示词并写回，支持最多 5 轮续写、历史版本与逐行对比、中英双语提示词方案。",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./package.json": "./package.json",
+    "./cordis.patch.yml": "./cordis.patch.yml"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "src",
+    "icon.svg",
+    "cordis.patch.yml",
+    "LICENSE",
+    "README.md",
+    "README.en.md",
+    "CHANGELOG.md"
+  ],
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "prompt",
+    "prompt-engineering",
+    "rewrite",
+    "continue"
+  ],
+  "author": "Nihao7-L",
+  "license": "MIT",
+  "homepage": "https://github.com/Nihao7-L/dsh-prompt-chain#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nihao7-L/dsh-prompt-chain.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Nihao7-L/dsh-prompt-chain/issues"
+  },
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0",
+    "dsh": "^0.1.2-rc.1 || ^0.1.7-rc.2 || ^0.2.0-rc.1"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": []
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.2",
+    "@deepseek-ai/dsh-llm": "^0.1.2-rc.1 || ^0.1.7-rc.2 || ^0.2.0-rc.1"
+  }
+}

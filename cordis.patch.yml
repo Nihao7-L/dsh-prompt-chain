@@ -1,0 +1,9 @@
+# dsh-prompt-chain bundle patch
+#
+# 这一行 insert 负责挂载插件的宿主半边（index.js）。
+# 浏览器半边（client.js）由 package.json 里的 dsh.client 声明，
+# 并且只会绑定在 name 为裸包名的那一行上；写成子路径不会带上半身。
+- insert:
+    - id: prompt-chain
+      name: 'dsh-prompt-chain'
+      config: {}
