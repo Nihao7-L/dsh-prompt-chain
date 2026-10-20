@@ -1,8 +1,19 @@
+<div align="center">
+
+<img src="icon.svg" width="72" height="72" alt="dsh-prompt-chain" />
+
 # dsh-prompt-chain
 
-**在 DSH 输入框里按一下增强按钮，把随手写的草稿变成结构清晰、能直接执行的提示词；写长了还能一轮一轮接着说下去。**
+**在 DSH 输入框里按一下增强按钮，把随手写的草稿变成结构清晰、能直接执行的提示词——写长了还能一轮一轮接着说下去。**
 
-[English](./README.en.md)
+[![Version](https://img.shields.io/badge/version-1.0.0-4f7cff?style=flat-square)](https://github.com/Nihao7-L/dsh-prompt-chain/releases)
+[![License](https://img.shields.io/badge/license-MIT-3da639?style=flat-square)](./LICENSE)
+[![DSH](https://img.shields.io/badge/DSH-0.2.x-8b5cf6?style=flat-square)](#兼容性与限制)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-6b7280?style=flat-square)](#兼容性与限制)
+
+[English](./README.en.md) · **简体中文**
+
+</div>
 
 ![演示：写草稿 → 点增强 → 继续生成 → 对比 → 换图标](docs/demo.gif)
 

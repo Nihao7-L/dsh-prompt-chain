@@ -1,8 +1,19 @@
+<div align="center">
+
+<img src="icon.svg" width="72" height="72" alt="dsh-prompt-chain" />
+
 # dsh-prompt-chain
 
 **One click on the enhance button in the DSH composer turns a rough draft into a precise, executable prompt — and when the answer is still too short, you keep going, round after round.**
 
-[中文](./README.md)
+[![Version](https://img.shields.io/badge/version-1.0.0-4f7cff?style=flat-square)](https://github.com/Nihao7-L/dsh-prompt-chain/releases)
+[![License](https://img.shields.io/badge/license-MIT-3da639?style=flat-square)](./LICENSE)
+[![DSH](https://img.shields.io/badge/DSH-0.2.x-8b5cf6?style=flat-square)](#compatibility)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-6b7280?style=flat-square)](#compatibility)
+
+**English** · [简体中文](./README.md)
+
+</div>
 
 ![Demo: draft → enhance → continue → compare → custom icon](docs/demo.gif)
 

@@ -2,7 +2,7 @@
   "name": "dsh-prompt-chain",
   "version": "1.0.0",
   "type": "module",
-  "description": "在 DSH 输入框里一键把草稿改写成结构清晰的提示词并写回，支持最多 5 轮续写、历史版本与逐行对比、中英双语提示词方案。",
+  "description": "One-click prompt rewriting in the DSH composer — keep going for up to 5 rounds, diff every change, and jump back to any version.",
   "main": "./index.js",
   "exports": {
     ".": "./index.js",
