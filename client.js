@@ -802,16 +802,13 @@ window.__ModuleLoader__.load({
 .pe_head_name{color:var(--dsw-alias-label-tertiary);font-size:13px;font-weight:400;line-height:18px;letter-spacing:0;text-decoration:none;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pe_head_name:hover{text-decoration:underline;color:var(--dsw-alias-label-secondary)}
 .pe_head_ver{color:var(--dsw-alias-label-tertiary);font-size:12px;line-height:18px;font-weight:400;font-variant-numeric:tabular-nums;margin-left:2px}
-/* m20619 / m20706：CH/EN 与插件名同一行，右边缘要与上面一行「打开配置文件」
-   按钮的左边缘齐平。
-   实测数据（client-diag 的 actions-inset 那条）：panel.right=1360、
-   page.right=1336 ⇒ 本页内容区右边缘离面板右边缘 24px（就是 .options 的
-   padding-right）。而按钮左边缘还在更左边，所以：
-     需要的 margin-right = (面板右到按钮左的实测距离) - 24px
-   变量 --pc-actions-right 由 installActionsInset 运行时实测写入 [data-pc-page]。
-   量不到时用兜底的 50px（按宿主规格 14+28+8 算），减去 24 得 26px ——
-   即使实测失效，位置也只是差一点点，不会跑到屏幕外。 */
-.pe_head_actions{display:flex;align-items:center;gap:8px;flex:none;margin-left:auto;margin-right:calc(var(--pc-actions-right,50px) - 24px)}
+/* m20619 / m20706 / m20909：CH/EN 与插件名同一行，右边缘对齐上面一行
+   「打开配置文件」按钮的右边缘。
+   m20909 起不再走「实测按钮左边缘」那条路：实测量的是宿主 DOM，缩放一变、
+   内边距一改就偏 —— 这正是对齐反复失效的根源。现在 CH/EN 直接贴本页内容区
+   的右边缘（.pe_head 与 .pe_content 共用同一套 24px 内边距），与上面那行
+   按钮共用同一条右基准线，不需要任何实测。 */
+.pe_head_actions{display:flex;align-items:center;gap:8px;flex:none;margin-left:auto}
 /* m20618：图标动画调慢 —— 四根线每根间隔 220ms 依次落下，整轮 5 秒。
    之前 3 秒/90ms 是用户说"太慢"后我调快的，现在又说太快，回到接近初版的节奏。 */
 .pe_head_icon .pc_ln{animation:pc_ln_in 300ms ease-out both}
@@ -3804,13 +3801,14 @@ Output shape:
             title: GITHUB_URL,
           }, PLUGIN_NAME),
           version ? h('span', { className: 'pe_head_ver' }, 'v' + version) : null,
-          // CH/EN 在**同一行**的最右端，右边缘对齐上面一行「打开配置文件」按钮的
-          // 左边缘。margin-right 由 installActionsInset 实测宿主 DOM 后写成 CSS
-          // 变量 --pc-actions-right（宿主规格是 50px，我们内容区只有 24px，而且
-          // 按钮宽度随缩放变化，所以必须实测、不能写死）。
+          // m20909：`CH | EN` 回到**最右端**——与「打开配置文件」按钮同一条右基准线。
+          // 之前按 installActionsInset 量到的按钮左边缘往左缩，是从截图里数像素的
+          // 结果（靠实测 CSS 变量那套），太脆：宿主一改内边距/缩放就偏。
+          // 现在改成同一套内容边距（.pe_head / .pe_content 都是 24px），
+          // 右边缘天然对齐，不再需要任何实测。
           h('div', {
             className: 'pe_head_actions',
-            style: { marginLeft: 'auto', marginRight: 'calc(var(--pc-actions-right,50px) - 24px)' },
+            style: { marginLeft: 'auto' },
           }, h(LangToggle, { t: tRaw })),
         ),
         // 三条兜底提示都能关掉：加载失败（host 不可达/读不到）与配置被修复过。

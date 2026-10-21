@@ -60,16 +60,16 @@
 
 > 前提：DSH 0.2.x（桌面端或 Web 端均可）。
 
-**方式 1 · 命令行**（推荐）
+**方式 1 · 插件市场**（发布后可用）
+插件市场里搜索 `dsh-prompt-chain`（或「提示词链」）→ 安装 → 完全退出 DSH 再打开。
+
+**方式 2 · 命令行**
 ```bash
 dsh plugin add dsh-prompt-chain
 ```
-装完 **完全退出 DSH 再打开**。
+装完 **完全退出 DSH 再打开**。（需要这个包已经发布到 npm；发布前请用下面的方式 3。）
 
-**方式 2 · 插件市场**
-插件市场里搜索 `dsh-prompt-chain`（或「提示词链」）→ 安装 → 完全退出 DSH 再打开。
-
-**方式 3 · 下载 tgz 安装**（不想用 npm 时）
+**方式 3 · 下载 tgz 安装**（发布前唯一可用）
 在 [Releases](https://github.com/Nihao7-L/dsh-prompt-chain/releases/latest) 下载 `dsh-prompt-chain.tgz`，然后：
 ```bash
 dsh plugin add .\dsh-prompt-chain.tgz
