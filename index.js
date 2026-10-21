@@ -33,6 +33,13 @@ export const inject = ['llm']
 
 const PLUGIN_VERSION = readPackageVersion()
 
+/**
+ * m21352：`GET /meta` 要展示「现在发出去的最终系统提示词」，而语言规则在
+ * `auto` 模式下依赖草稿本身。用一段中文样例去组装，「查看最终提示词」里看到
+ * 的就是中文输入时真正发送的内容（以前没有样例，auto 会退化成英文分支）。
+ */
+const DEFAULT_SYSTEM_PROMPT_SAMPLE = '把这个需求改写成一条可以直接执行的提示词'
+
 function readPackageVersion() {
   try {
     return String(JSON.parse(fs.readFileSync(path.join(PKG_DIR, 'package.json'), 'utf8')).version ?? '')
@@ -407,7 +414,8 @@ export function apply(ctx) {
     if (draft === '') return { ok: false, error: { code: 'EMPTY_DRAFT', message: '输入框是空的，没有可增强的内容。' } }
 
     const continuing = mode === 'continue'
-    const system = continuing ? continueSystemPrompt(settings) : enhanceSystemPrompt(settings)
+    // m21352：「跟随原文」由草稿自身的文字决定，所以要把它传进系统提示词组装。
+    const system = continuing ? continueSystemPrompt(settings, draft) : enhanceSystemPrompt(settings, draft)
     const framed = continuing ? continueUserText(draft) : enhanceUserText(text)
     const helpers = await loadLlmHelpers(logger.warn)
     const messages = [helpers.createUserMessage
@@ -640,8 +648,8 @@ export function apply(ctx) {
           // (src/config.js) instead of a second copy in the client that drifts.
           // A custom systemPrompt never leaks in here — this is "什么才是默认".
           prompts: {
-            rewrite: enhanceSystemPrompt(settings),
-            continue: continueSystemPrompt(settings),
+            rewrite: enhanceSystemPrompt(settings, DEFAULT_SYSTEM_PROMPT_SAMPLE),
+            continue: continueSystemPrompt(settings, DEFAULT_SYSTEM_PROMPT_SAMPLE),
           },
         })
       }

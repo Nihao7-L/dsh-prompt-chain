@@ -371,11 +371,36 @@ export function normalizeSettings(raw) {
   return out
 }
 
-/** One shared language rule so every mode picks the same output language. */
-function languageRule(settings) {
-  return settings.language === 'zh' ? 'Write the output in Chinese.'
-    : settings.language === 'en' ? 'Write the output in English.'
-    : 'Use the same language as the original prompt.'
+/**
+ * One shared language rule so every mode picks the same output language.
+ *
+ * m21352：用户选了「跟随原文」，中文输入却拿到英文结果。原来 auto 分支只有一句
+ * `Use the same language as the original prompt.` —— 而系统提示词正文（内置模板
+ * 或用户自定义）全是英文，模型被大段英文带着走，这句单薄的指令压不住。
+ *
+ * 现在把 auto 拆成两支，并且**以原文自身的文字为准**：只要草稿里有中文字符，
+ * 就把语言钉成中文（并明确「正文是英文是无关的」）；否则钉成英文，并禁止
+ * 「顺手翻译成中文」。两支都不再依赖模型自己去判断「原 prompt 是什么语言」。
+ */
+function hasCjk(text) {
+  return /[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/.test(String(text || ''))
+}
+
+function languageRule(settings, sourceText) {
+  if (settings.language === 'zh') return 'Write the output in Chinese.'
+  if (settings.language === 'en') return 'Write the output in English.'
+  if (hasCjk(sourceText)) {
+    return [
+      'Output language: Chinese. The original draft is in Chinese, so write the whole answer in Chinese.',
+      'This rule overrides the language of the instructions above — they are written in English for precision, but the answer must be Chinese.',
+      'Keep code, file paths, identifiers, commands and version numbers byte-for-byte as they appear; only the prose is Chinese.',
+    ].join('\n')
+  }
+  return [
+    'Output language: English. The original draft contains no Chinese characters, so write the whole answer in English.',
+    'Do not translate the answer into Chinese, and do not add a Chinese version of it.',
+    'Keep code, file paths, identifiers, commands and version numbers byte-for-byte as they appear.',
+  ].join('\n')
 }
 
 /**
@@ -386,21 +411,24 @@ function languageRule(settings) {
  * contract lines are *never* replaceable — they are what keeps a reply usable as
  * a prompt (only the result, no preamble, no code fence, don't answer it), and a
  * config that loses them produces panels full of the model's own commentary.
+ *
+ * `sourceText` (m21352) is the draft being rewritten; only the `auto` language
+ * branch reads it, to decide Chinese vs English from the text itself.
  */
-function composeSystemPrompt(settings, roleLines, contractLines) {
+function composeSystemPrompt(settings, roleLines, contractLines, sourceText) {
   const custom = typeof settings.systemPrompt === 'string' ? settings.systemPrompt.trim() : ''
   const role = custom !== '' ? [custom] : roleLines
-  return role.concat([languageRule(settings), 'Rules:'], contractLines).filter(Boolean).join('\n')
+  return role.concat([languageRule(settings, sourceText), 'Rules:'], contractLines).filter(Boolean).join('\n')
 }
 
 /** Built-in system prompt for the rewrite call. */
-export function enhanceSystemPrompt(settings) {
+export function enhanceSystemPrompt(settings, sourceText) {
   return composeSystemPrompt(settings, [DEFAULT_SYSTEM_PROMPT_BODY], [
     '- Output ONLY the rewritten prompt as plain text — no quotes, no preamble, no explanation, no Markdown code fences around the whole answer.',
     '- Preserve every explicit requirement, path, identifier and number from the original.',
     '- Never invent requirements the original does not imply.',
     '- Do not answer the prompt; rewrite it.',
-  ])
+  ], sourceText)
 }
 
 /**
@@ -409,7 +437,7 @@ export function enhanceSystemPrompt(settings) {
  * The answer is appended to the existing text by the caller, so the model must
  * emit the continuation ONLY — repeating the original would duplicate it.
  */
-export function continueSystemPrompt(settings) {
+export function continueSystemPrompt(settings, sourceText) {
   return composeSystemPrompt(settings, [
     'The user is still writing a prompt for an AI coding assistant and has stopped mid-thought. Continue that prompt from exactly where it ends.',
   ], [
@@ -418,7 +446,7 @@ export function continueSystemPrompt(settings) {
     '- Add the concrete detail the user most plausibly wants next: constraints, inputs and outputs, edge cases, acceptance criteria.',
     '- Never contradict or invent facts, paths, numbers or requirements that conflict with the original.',
     '- No preamble, no explanation, no Markdown code fence around the whole answer.',
-  ])
+  ], sourceText)
 }
 
 /**
