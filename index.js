@@ -681,18 +681,44 @@ export function apply(ctx) {
       // 下拉选择）。ctx.llm.listModels 是 adapter 自己的目录，可能为空——有些
       // adapter 不公布清单，而核心路由本身允许未列出的 id，所以客户端必须保留
       // 手填这条路，不能把「列表空」当成「这个 provider 没有模型」。
+      //
+      // m20822：只问 adapter 会让「增强模型」下拉只剩一项。DSH 的 pi-ai adapter
+      // 把模型写在 provider 配置里（cordis.patch.yml 的 llm-pi-ai →
+      // providers.<id>.models[]），listModels 未必把它们报出来。所以这里合并
+      // 两条来源：adapter 报的清单 + provider 配置里声明的 models[]，去重。
       if (req.method === 'GET' && routePath === '/models') {
         const provider = url.searchParams.get('provider') || ''
         if (!provider) return json(res, 200, { models: [] })
+        const seen = new Set()
+        const out = []
+        const push = (id, name) => {
+          const key = String(id || '').trim()
+          if (!key || seen.has(key)) return
+          seen.add(key)
+          out.push({ id: key, name: String(name || key) })
+        }
+        const warnings = []
         try {
           const models = await ctx.llm.listModels(provider)
-          return json(res, 200, {
-            models: (Array.isArray(models) ? models : []).map((m) => ({ id: m.id, name: m.name || m.id })),
-          })
+          for (const m of Array.isArray(models) ? models : []) push(m?.id, m?.name)
         } catch (error) {
+          warnings.push(String(error?.message ?? error))
           hostLog('models-failed', { provider, reason: String(error?.message ?? error) })
-          return json(res, 200, { models: [], warning: String(error?.message ?? error) })
         }
+        // 兜底：provider 配置里声明的 models[]（magpie / pi-ai 就是这么配的）
+        try {
+          const providers = await ctx.llm.listProviders()
+          const hit = (Array.isArray(providers) ? providers : []).find((p) => p && p.id === provider)
+          const declared = hit && hit.config && Array.isArray(hit.config.models) ? hit.config.models : null
+          const own = hit && Array.isArray(hit.models) ? hit.models : null
+          for (const m of declared || own || []) push(m?.id, m?.name)
+        } catch (error) {
+          warnings.push(String(error?.message ?? error))
+          hostLog('models-config-failed', { provider, reason: String(error?.message ?? error) })
+        }
+        const body = { models: out }
+        if (warnings.length) body.warning = warnings.join('; ')
+        return json(res, 200, body)
       }
       if (req.method === 'GET' && routePath === '/route') {
         const sessionId = url.searchParams.get('sessionId') ?? undefined
