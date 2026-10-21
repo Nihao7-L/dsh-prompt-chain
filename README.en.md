@@ -23,14 +23,12 @@
 
 ## Screens
 
-| Entry | Result panel |
+| 1 | 2 |
 | --- | --- |
 | ![Enhance button next to the composer](docs/01-composer.png) | ![Rewrite result panel](docs/02-panel.png) |
 | **Click the button left of the composer** — a round icon by default, swappable for an emoji, image or GIF | **The result writes straight back**; the bar has regenerate / continue / copy / done |
-| Continue | Line diff |
 | ![History after continuing](docs/03-continue.png) | ![Line-by-line diff](docs/04-diff.png) |
-| **Keep going**; every round enters history, click any version to jump back | **Green added, red removed**, with a change count in the header |
-| Prompt presets | Icon library |
+| **Keep going** — up to 5 rounds; every round enters history, click any version to jump back | **Green added, red removed**, with a change count in the header |
 | ![Bilingual prompt panes](docs/05-settings-prompt.png) | ![Icon library and preview](docs/06-button-style.png) |
 | **6 read-only presets** plus up to 3 of your own; English on the left is what gets sent | **2 static + 1 hand-drawn + 3 animated** groups, all usable as the button icon |
 
