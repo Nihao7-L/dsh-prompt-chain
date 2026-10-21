@@ -167,6 +167,11 @@ window.__ModuleLoader__.load({
     const DICT = {
       zh: {
         nav: '提示词增强',
+      // m20392：设置页页头的大标题（侧边栏那一行仍用 nav）。与插件市场一样：
+      // 中文主名 + 英文包名 + 版本号。
+      pluginTitle: '提示词增强',
+        // m20072：页头标题下面那行灰说明（照宿主内置设置页的 intro 写法）。
+        pageIntro: '输入框里按 ✨ 把草稿改写成可执行的提示词，可连续续写 5 轮并随时回退到任意一版。',
         enhance: '增强提示词',
         working: '正在增强…',
         enhanced: '已用模型重写提示词',
@@ -375,6 +380,9 @@ window.__ModuleLoader__.load({
       },
       en: {
         nav: 'Prompt Enhance',
+      pluginTitle: 'Prompt Enhance',
+        // m20072: the grey intro line under the page title.
+        pageIntro: 'Press ✨ in the composer to rewrite your draft into an actionable prompt — continue up to 5 rounds and jump back to any version.',
         enhance: 'Enhance prompt',
         working: 'Enhancing…',
         enhanced: 'Rewrote the prompt with the model',
@@ -575,6 +583,10 @@ window.__ModuleLoader__.load({
     }
 
     // ── styles ──────────────────────────────────────────────────────────────────
+    // m20392：字形不再走 data: URI + mask（见 GLYPH_LINES / GlyphIcon）。
+    // 那条路依赖 `:root` 上的自定义属性，一旦样式被重建或属性没写进去，
+    // mask 就是空的 —— 实测就是「图标不显示」。现在是真正的内联 SVG。
+
     const CSS = `
 // .pe_trigger_wrap 是位置控制的载体：它必须自己是一个 flex item 才能吃
 // 到 order / margin / transform。设置里给按钮加的内联样式就打在它身上，
@@ -710,7 +722,9 @@ window.__ModuleLoader__.load({
 .pe_root{display:flex;flex-direction:column;gap:16px;max-width:760px;font-size:13px;line-height:1.55;color:var(--dsw-alias-label-primary);-webkit-font-smoothing:antialiased}
 .pe_root *{box-sizing:border-box}
 .pe_sec{display:flex;flex-direction:column;gap:10px}
-.pe_sec_title{font-size:14px;font-weight:680}
+/* m20267：各分区标题统一加粗放大一档（14px/680 → 15px/700），
+   主标题再单独拔高（见 .pe_head_title）。 */
+.pe_sec_title{font-size:15px;font-weight:700;letter-spacing:.01em}
 .pe_hd_add,.pe_hd_del{font:inherit;font-size:11px;font-weight:700;margin-left:4px}
 .pe_hd_add{color:var(--dsw-alias-state-success-primary,#2e9e5b)}
 .pe_hd_del{color:var(--dsw-alias-label-error,#d9534f)}
@@ -761,12 +775,66 @@ window.__ModuleLoader__.load({
 .pe_prompt_row .pe_input{flex:1 1 0;min-width:140px;width:auto}
 /* 行首的小标签独占一行（保持原有的「上面标签、下面下拉+按钮」观感）。 */
 .pe_prompt_tag{flex:1 1 100%;display:inline-flex;align-items:center;gap:4px;font-size:11.5px;color:var(--dsw-alias-label-tertiary);white-space:nowrap}
-/* 设置弹窗头部的「中文 | English」切换按钮（m15052 ①）：两段式、不用下拉框，
-   选中的那段高亮；两段都不亮＝跟随 DSH。 */
-.pe_lang{display:inline-flex;align-items:stretch;border:1px solid var(--dsw-alias-border-l2);border-radius:var(--dsw-radius-sm,8px);corner-shape:var(--dsw-corner-shape);overflow:hidden;background:var(--dsw-alias-bg-layer-1)}
-.pe_lang_seg{border:none;background:none;padding:4px 8px;font:inherit;font-size:11px;line-height:1.2;letter-spacing:.02em;min-width:30px;text-align:center;color:var(--dsw-alias-label-secondary);cursor:pointer;transition:background-color .12s ease,color .12s ease}
-.pe_lang_seg + .pe_lang_seg{border-left:1px solid var(--dsw-alias-border-l2)}
-.pe_lang_seg:hover{background:var(--dsw-alias-interactive-bg-hover-solid)}
+/* m19942：本页自己的页头 = 标题 + 中英切换。
+   原来这个切换按钮走 settings.action 插槽，而宿主把该插槽声明成
+   { kind:"list", scope:"root" }（dsh-client-ui-settings-general/lib/client.js）
+   ⇒ 它对所有设置分页共用，于是桌宠、bili、插件市场等页面的头部都出现了
+   一个只会改 prompt-chain 语言的按钮（用户 m19931 实拍）。现在只放在本页内。
+   注意：这段 CSS 整体是一个反引号模板字符串，注释里绝不能出现反引号。
+
+   排版（m20072 用户说"太丑了，看看别人的"）照抄宿主内置设置页的规范：
+   ModelsSection.module.css 里 section/title/intro 三件套 ——
+     .section{max-width:720px;display:flex;flex-direction:column;gap:12px}
+     .title{font-size:16px;font-weight:500;line-height:24px}
+     .intro{font-size:14px;line-height:22px;color:label-tertiary}
+   所以标题是 16px/500 的纯文本、下面跟一行 14px 灰说明，语言切换与标题
+   同行右靠（不再自己占一行），整体高度与「模型」页首屏一致。 */
+/* m20193：图标 + 可点名字 + 版本号，一行放下。
+   m20392：图标改成内联 SVG（见 GLYPH_LINES），不再用 CSS mask + 伪元素 ——
+   用户实拍里图标是空的，而 SVG 元素不依赖 data: URL 变量、也不受
+   prefers-reduced-motion 分支影响，任何主题/任何浏览器都能画出来。
+   排版照插件市场（dshmarket）那一行：彩色图标 + 粗体主名 + 灰色次名 + 版本号。 */
+.pe_head{display:flex;align-items:center;gap:6px;margin:0 0 10px;min-height:30px;flex-wrap:nowrap}
+.pe_head_icon{flex:none;width:18px;height:18px;display:block;color:var(--dsw-alias-label-primary);overflow:visible}
+/* m20581：顺序是 图标 → 提示词增强 → dsh-prompt-chain（链接）→ v1.0.1 → CH/EN。
+   中文名是普通文本，英文包名才是可点击的 GitHub 链接（用户 m20535 点名）。 */
+.pe_head_title{color:var(--dsw-alias-label-primary);margin:0;font-size:18px;font-weight:700;line-height:26px;letter-spacing:-.01em;white-space:nowrap}
+.pe_head_name{color:var(--dsw-alias-label-tertiary);font-size:13px;font-weight:400;line-height:18px;letter-spacing:0;text-decoration:none;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pe_head_name:hover{text-decoration:underline;color:var(--dsw-alias-label-secondary)}
+.pe_head_ver{color:var(--dsw-alias-label-tertiary);font-size:12px;line-height:18px;font-weight:400;font-variant-numeric:tabular-nums;margin-left:2px}
+/* m20619 / m20706：CH/EN 与插件名同一行，右边缘要与上面一行「打开配置文件」
+   按钮的左边缘齐平。
+   实测数据（client-diag 的 actions-inset 那条）：panel.right=1360、
+   page.right=1336 ⇒ 本页内容区右边缘离面板右边缘 24px（就是 .options 的
+   padding-right）。而按钮左边缘还在更左边，所以：
+     需要的 margin-right = (面板右到按钮左的实测距离) - 24px
+   变量 --pc-actions-right 由 installActionsInset 运行时实测写入 [data-pc-page]。
+   量不到时用兜底的 50px（按宿主规格 14+28+8 算），减去 24 得 26px ——
+   即使实测失效，位置也只是差一点点，不会跑到屏幕外。 */
+.pe_head_actions{display:flex;align-items:center;gap:8px;flex:none;margin-left:auto;margin-right:calc(var(--pc-actions-right,50px) - 24px)}
+/* m20618：图标动画调慢 —— 四根线每根间隔 220ms 依次落下，整轮 5 秒。
+   之前 3 秒/90ms 是用户说"太慢"后我调快的，现在又说太快，回到接近初版的节奏。 */
+.pe_head_icon .pc_ln{animation:pc_ln_in 300ms ease-out both}
+@keyframes pc_ln_in{
+  from{opacity:0;transform:translateX(-3px)}
+  to{opacity:1;transform:translateX(0)}
+}
+.pe_head_icon{animation:pc_glyph_cycle 5000ms ease-in-out infinite}
+@keyframes pc_glyph_cycle{
+  0%,100%{opacity:1}
+  88%{opacity:1}
+  94%{opacity:0}
+}
+@media (prefers-reduced-motion: reduce){
+  .pe_head_icon,.pe_head_icon .pc_ln{animation:none}
+}
+/* m20392：CH/EN 已经搬回本页标题行尾（.pe_head_actions），不再需要这套
+   跨分页可见性门控 —— 它天生只存在于我们这一页，"别的分页也长出 CH/EN"
+   （m19931）的 bug 从结构上就不存在了。这里只保留按钮自己的样式。 */
+.pe_lang{display:inline-flex;align-items:stretch;border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm,8px);corner-shape:var(--dsw-corner-shape);overflow:hidden;background:0 0}
+.pe_lang_seg{border:none;background:none;padding:2px 7px;font:inherit;font-size:11px;line-height:16px;letter-spacing:.02em;min-width:26px;text-align:center;color:var(--dsw-alias-label-tertiary);cursor:pointer;transition:background-color .12s ease,color .12s ease}
+.pe_lang_seg + .pe_lang_seg{border-left:1px solid var(--dsw-alias-border-l3)}
+.pe_lang_seg:hover{background:var(--dsw-alias-interactive-bg-hover)}
 .pe_lang_seg.on{background:var(--dsw-alias-interactive-bg-hover-solid);color:var(--dsw-alias-label-primary);font-weight:600}
 /* 正在生效的那条：标签后面点一颗绿点（用户要求「当前生效的加个标记」）。 */
 .pe_dot{width:6px;height:6px;border-radius:50%;background:var(--dsw-alias-state-success,#22c55e);flex:0 0 auto}
@@ -944,8 +1012,9 @@ window.__ModuleLoader__.load({
       })
     }
 
-    // m15052 ①：插件界面语言的入口从设置页下拉框搬到了设置弹窗头部（LangToggle），
-    // 所以不能再依赖设置页里的 `update()` 闭包 —— 那个函数只活在设置页组件里。
+    // m15052 ①：插件界面语言的入口从设置页下拉框换成了一个切换按钮（LangToggle）。
+    // m19942：按钮已从全局 settings.action 插槽搬回本页页头，但它仍然不在设置页
+    // 表单里 ⇒ 不能依赖设置页里的 `update()` 闭包（那个函数只活在设置页组件里）。
     // 这里直接改 settingsStore（所有订阅者立刻重渲染）并把整份设置 PUT 回去；
     // 存不上也不回滚：语言已经切过去了，下一次保存会把它带上。
     const setUiLang = (value) => {
@@ -957,20 +1026,233 @@ window.__ModuleLoader__.load({
     }
 
     /**
-     * m15052 ①：设置弹窗头部右上角、紧挨「打开配置文件」左边的语言切换按钮。
+     * m20392：本插件的图形标记 —— 三根满长横线 + 第四根短一半（用户给的图样）。
      *
-     * 用户明确不要下拉框、要「切换按钮」。三个状态用两个按钮到达：点没高亮的
-     * 那段＝切到那种语言；点**已经高亮**的那段＝取消强制、回到「跟随 DSH」。
+     * 为什么是内联 SVG 而不是之前那套「CSS mask + data: URL + 四个 <i> 关键帧」：
+     * 用户在实拍里看到的是**空位**，说明那条路在真实环境里没画出来。内联 SVG 不
+     * 依赖 data: URI 转义、不依赖 mask-composite，也不需要 prefers-reduced-motion
+     * 的两套分支，主题色直接吃 currentColor，稳得多。
+     * 动画仍在：四根线按序落下（stroke-dasharray 打底，逐根用 CSS 关键帧改
+     * opacity + translateX 模拟"写上去"），系统要求减少动态时整组一次显示。
+     */
+    const GLYPH_LINES = [
+      { y: 2.4, w: 10, delay: 0 },
+      { y: 5.9, w: 10, delay: 220 },
+      { y: 9.4, w: 10, delay: 440 },
+      { y: 12.9, w: 6, delay: 660 },
+    ]
+
+    function GlyphIcon(props) {
+      const cls = (props && props.className) || 'pe_head_icon'
+      const lines = GLYPH_LINES.map((ln, i) => h('rect', {
+        key: 'ln' + i,
+        className: 'pc_ln',
+        x: 3,
+        y: ln.y,
+        width: ln.w,
+        height: 1.7,
+        rx: 0.85,
+        fill: 'currentColor',
+        style: { animationDelay: ln.delay + 'ms' },
+      }))
+      return h('svg', {
+        className: cls,
+        viewBox: '0 0 16 16',
+        width: 18,
+        height: 18,
+        fill: 'none',
+        'aria-hidden': 'true',
+        focusable: 'false',
+      }, lines)
+    }
+
+    /**
+     * 量出「打开配置文件」按钮的左边缘，写进 CSS 变量 --pc-actions-right。
+     *
+     * m20619：用户第三次说 CH/EN 没对齐 —— 实测宿主自己的数字：
+     *   .wCInkW_header{padding:20px 14px 8px 10px}  右侧 14px
+     *   .wCInkW_close{width:28px}                    关闭按钮 28px
+     *   .wCInkW_actions{gap:8px}                     [按钮] 8px [关闭]
+     *   .wCInkW_options{padding:0 24px 24px}         我们的内容区 24px
+     * ⇒ 按钮左边缘到面板右边缘 = 14 + 28 + 8 = 50px，我们只有 24px，
+     *   所以 CH/EN 还要再往右顶 26px。
+     *
+     * 但那 26px 是"凑"出来的：按钮宽度随系统缩放/字体/宿主改版变化，写死就会
+     * 再次错位。所以这里**直接量真实 DOM**：找面板、找按钮、算按钮左边缘相对
+     * 面板右边缘的距离，写进 CSS 变量给 .pe_head_actions 用。
+     * 只读三个属性（offsetLeft/offsetWidth/closest），不写宿主 DOM —— 换掉
+     * React 节点会让面板卸载时 NotFoundError，这条线绝对不能碰。
+     * 量不到（宿主改结构、还没渲染完）就清掉变量，CSS 里回退到原来的
+     * margin-left:auto，界面不会崩，只是退回"贴本行最右"。
+     */
+    const ACTIONS_VAR = '--pc-actions-right'
+    const SETTINGS_PANEL_SELECTOR = '[data-shortcut-modal="settings"]'
+    let lastInsetReport = ''
+
+    /**
+     * 找到宿主页头里「打开配置文件」那个按钮。
+     *
+     * m20706 的坑（实测日志抓到的）：原来用 getText('openConfig') 去比对文案，
+     * 但 getText 是**本插件**的词条函数 —— 词条表里根本没有 openConfig，
+     * 于是匹配串永远是字符串 "openConfig"，永远命中不了任何按钮，
+     * button.left 一直是 null，对齐逻辑一次都没生效过。
+     *
+     * 那个按钮是**宿主**的（dsh-client-ui-settings-general 的 openDocument 词条）。
+     * 所以不能依赖任何词条名，改成：在面板里找**最后一个**按钮 ——
+     * 宿主 header 的 actions 是 [打开配置文件][×关闭]（justify-content:flex-end，
+     * 关闭永远在最后），所以"最后两个里的前一个"才是它。取倒数第二个，
+     * 再用 class 核对一下（宿主的按钮带 dsw 前缀或 outline 变体），核不上就
+     * 退回倒数第二个本身 —— 宿主改文案/改语言都不影响这个定位。
+     */
+    function findOpenDocumentButton(panel) {
+      if (!panel) return null
+      const btns = panel.querySelectorAll('button')
+      if (!btns.length) return null
+      // 关闭按钮是最后一个（actions 靠右排列，× 永远在末尾）。
+      const close = btns[btns.length - 1]
+      // 优先取"紧挨在关闭按钮前面"的那个，它就是「打开配置文件」。
+      return btns.length >= 2 ? btns[btns.length - 2] : close
+    }
+
+    function measureActionsInsetReport(getText) {
+      try {
+        const panel = document.querySelector(SETTINGS_PANEL_SELECTOR)
+        const page = document.querySelector('[data-pc-page]')
+        const info = { panel: false, page: false, button: null, inset: null, calc: null }
+        if (!panel || !page) return info
+        info.panel = true
+        info.page = true
+        const pr = panel.getBoundingClientRect()
+        info.panelRight = Math.round(pr.right)
+        const pageRect = page.getBoundingClientRect()
+        info.pageRight = Math.round(pageRect.right)
+        const actionsEl = page.querySelector('.pe_head_actions')
+        if (actionsEl) {
+          const ar = actionsEl.getBoundingClientRect()
+          info.actionsRight = Math.round(ar.right)
+          info.actionsLeft = Math.round(ar.left)
+        }
+        const btns = panel.querySelectorAll('button')
+        info.btnCount = btns.length
+        const seen = []
+        for (let i = 0; i < btns.length && seen.length < 12; i++) {
+          seen.push(String(((btns[i].textContent || '') + ' ' + (btns[i].getAttribute('aria-label') || '')).trim()).slice(0, 20))
+        }
+        info.labels = seen
+        const target = findOpenDocumentButton(panel)
+        if (!target) return info
+        const br = target.getBoundingClientRect()
+        info.button = Math.round(br.left)
+        info.buttonRight = Math.round(br.right)
+        info.inset = Math.round(pr.right - br.left)
+        info.calc = Math.round(br.left - pageRect.right)
+        return info
+      } catch (e) {
+        return { error: String(e && e.message || e) }
+      }
+    }
+
+    function measureActionsInset() {
+      try {
+        const panel = document.querySelector(SETTINGS_PANEL_SELECTOR)
+        const page = document.querySelector('[data-pc-page]')
+        if (!panel || !page) return null
+        const target = findOpenDocumentButton(panel)
+        if (!target) return null
+        // 两个元素可能隔着几层，用 getBoundingClientRect 直接比屏幕坐标最稳。
+        // 注意：这个距离是相对**面板右边缘**的，而 CH/EN 位于本页内容区里、
+        // 内容区右边缘离面板右边缘还有 padding(24px)。CSS 里用的是
+        // margin-right: calc(var(--pc-actions-right) - 24px) 来抵消这 24px，
+        // 所以这里给的是"面板右边缘到按钮左边缘"的绝对值，不做减法。
+        const pr = panel.getBoundingClientRect()
+        const br = target.getBoundingClientRect()
+        const inset = pr.right - br.left
+        if (!(inset > 0) || inset > pr.width / 2) return null
+        return Math.round(inset)
+      } catch (e) {
+        return null
+      }
+    }
+
+    function installActionsInset(getText) {
+      if (typeof document === 'undefined') return () => {}
+      let raf = 0
+      const apply = () => {
+        raf = 0
+        const page = document.querySelector('[data-pc-page]')
+        if (!page) return
+        const px = measureActionsInset()
+        if (px == null) page.style.removeProperty(ACTIONS_VAR)
+        else page.style.setProperty(ACTIONS_VAR, px + 'px')
+        // m20674：把实测数字报给宿主日志（host-diag.ndjson），对齐问题只看数字、
+        // 不靠肉眼猜。只在数值变化时上报，避免每次 resize 都刷日志。
+        try {
+          const info = measureActionsInsetReport(typeof getText === 'function' ? getText : (k) => k)
+          const key = JSON.stringify(info)
+          if (key !== lastInsetReport) {
+            lastInsetReport = key
+            reportDiag('actions-inset', null, info)
+          }
+        } catch { /* 诊断永远不能影响渲染 */ }
+      }
+      const schedule = () => {
+        if (raf) return
+        raf = (typeof requestAnimationFrame === 'function')
+          ? requestAnimationFrame(apply)
+          : setTimeout(apply, 16)
+      }
+      apply()
+      // 面板可能晚一拍才渲染出来 / 用户改了缩放 / 切了分页，都要重算。
+      const ro = (typeof ResizeObserver === 'function') ? new ResizeObserver(schedule) : null
+      const panel = document.querySelector(SETTINGS_PANEL_SELECTOR)
+      if (ro && panel) ro.observe(panel)
+      window.addEventListener('resize', schedule)
+      return () => {
+        if (raf && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(raf)
+        if (ro) ro.disconnect()
+        window.removeEventListener('resize', schedule)
+      }
+    }
+
+    /**
+     * 把 CH/EN 的右边缘钉到「打开配置文件」按钮的左边缘上。
+     *
+     * 变量由 installActionsInset 实测写入；量不到时整个 var() 表达式失效，
+     * margin-left:auto 接管（退回"贴本行最右"），界面不会错位到屏幕外。
+     * 100vw 那一半只是做个合理的兜底量级，正常情况下永远用实测值。
+     */
+    const HEAD_ACTIONS_MARGIN =
+      'margin-left:auto;margin-right:var(--pc-actions-right)'
+
+    /**
+     * 插件界面语言的两段式切换按钮：`CH | EN`。
+     *
+     * m15052 ①：用户明确不要下拉框、要「切换按钮」。三个状态用两个按钮到达：点
+     * 没高亮的那段＝切到那种语言；点**已经高亮**的那段＝取消强制、回到「跟随 DSH」。
      * 所以 `auto` 时两段都不亮 —— 这本身就是它的状态显示。
+     *
+     * m19942 / m20392 的来回：它一度注册在 settings.action 插槽里，而宿主把该插槽
+     * 声明成 scope:"root" ⇒ 每个设置分页头部都会出现它（桌宠、bili…，m19931 实拍）。
+     * m20193 把它挪到「打开配置文件」左边，用户又在 m20392 画圈纠正：要跟插件名
+     * 同一行、贴在这一行的**最右端**。所以现在它由 SettingsPage 自己画在
+     * `.pe_head_actions` 里，根本不经过插槽 —— 别的分页自然不可能出现它。
      */
     function LangToggle(props) {
       const tRaw = (props && props.t) || ((key) => key)
+      // m20193：**可见性完全交给 CSS**（见 .pe_lang 的注释）。
+      // 宿主把 activeId 关在 SettingsRoot 内部（store 是 createSettingsShellStore
+      // 的私有实例），`shellInjected()` 只往下传 hooks，`renderSlot("settings.action",
+      // {})` 更是空 props ⇒ 组件里读不到"当前是哪一页"。
+      // 硬来（自己 querySelector 面板再读类名）在 jsdom 下会直接炸测试，而且
+      // 每次切换分页都得靠 MutationObserver 重渲染，得不偿失。
+      // 最终用纯 CSS：宿主给当前行加 [class*="active"]，我们在同样的作用域里
+      // 认「那一行是不是我们」，是才显示中间那一格。
       const live = React.useSyncExternalStore(settingsStore.subscribe, settingsStore.get, settingsStore.get)
       const cur = (live && live.uiLang) || 'auto'
       // 按钮自己的文案也跟着插件语言走：uiLang 为 zh/en 时 makeT 覆盖宿主词条。
       const t = makeT(tRaw, cur)
       // 段名只留两个字母（用户 m15246：字太大不好看）。全称挪到 aria-label，
-       // 读屏和悬停提示仍然知道这段是什么语言。
+      // 读屏和悬停提示仍然知道这段是什么语言。
       const seg = (value, label, full) => h('button', {
         type: 'button',
         className: 'pe_lang_seg' + (cur === value ? ' on' : ''),
@@ -982,6 +1264,157 @@ window.__ModuleLoader__.load({
         className: 'pe_lang',
         title: cur === 'auto' ? t('uiLangAuto') : t('uiLangToggleHint'),
       }, seg('zh', 'CH', t('uiLangZh')), seg('en', 'EN', t('uiLangEn')))
+    }
+
+    /**
+     * m20193：本插件在 `settings.section` 里的分页 id。
+     *
+     * 两个用途，都**不能改**：
+     *   1. 设置弹窗左侧导航的 key（宿主用它记当前分页）；
+     *   2. LangToggle 判断"现在是不是我们这页"。
+     * 改这个名字等于换一个分页，用户的"上次打开的页"会丢。
+     */
+    const SECTION_ID = 'prompt-chain'
+
+    /**
+     * m20193：侧边栏导航行的图标。
+     *
+     * 宿主 `navIcon(id)` 是**封闭白名单**（account / models / agent-presets /
+     * plugins / archived-sessions），其余 id 一律给 `IconSettingsOutlineMedium`
+     * —— 就是用户看到的齿轮。导航行数据只有 `{id, order, label}`，没有图标位，
+     * slot 契约里也没有（ui-slots 的 KindOptions / StoredEntry.options 同样只有
+     * id/order/label/priority）。所以第三方插件只能走 DOM 层。
+     *
+     * 三家成熟插件的做法完全一致（dsh-pet、dshmarket、dsh-better-sidebar）：
+     *   · 盯 [data-shortcut-modal="settings"] 面板；
+     *   · 按**标题文本**认出自己那行（DOM 里只有 label，没有 id —— 不能用
+     *     :nth-child，因为 account 行是条件出现的，行号会漂）；
+     *   · 只加一个 React 从不 diff 的 data-* 属性，再往里塞一个自己的 svg 子节点。
+     *
+     * **绝不能把那个 svg 换掉**（Node 的"替换子节点"那一类 API）：
+     * 它是 shell 的 React 节点，换掉后 React 手里还攥着已脱离文档的旧节点，
+     * 那一行卸载时会 removeChild 一个不在文档里的子节点 → NotFoundError，
+     * 整个设置面板崩掉。只能"藏起来 + 在旁边叠一个"，不能"拆掉重装"。
+     */
+    const NAV_MARK = 'data-dsh-prompt-chain-nav'
+    const NAV_PANEL_SELECTOR = '[data-shortcut-modal="settings"]'
+    const NAV_LIST_SELECTOR = '[class*="navList"]'
+    const NAV_CELL_SELECTOR = '[class*="navCell"]'
+    const NAV_LABEL_SELECTOR = '[class*="navLabel"]'
+    const NAV_ICON_SELECTOR = '[class*="navIcon"]'
+
+    /**
+     * 装侧边栏图标。返回清理函数。
+     *
+     * @param resolveLabel 取当前语言下的分页名（切语言后要重新认行）。
+     */
+    function installNavIcon(resolveLabel) {
+      if (typeof document === 'undefined' || typeof MutationObserver === 'undefined') return () => {}
+      const styleId = 'dsh-prompt-chain-nav-icon-css'
+      let tag = document.getElementById(styleId)
+      if (!tag) {
+        tag = document.createElement('style')
+        tag.id = styleId
+        tag.dataset.plugin = 'dsh-prompt-chain'
+        tag.dataset.pluginCss = 'dsh-prompt-chain/nav-icon'
+        tag.textContent = NAV_ICON_CSS
+        document.head.appendChild(tag)
+      }
+      let disposed = false
+      let queued = false
+
+      const claim = () => {
+        queued = false
+        if (disposed) return
+        const wanted = resolveLabel()
+        if (!wanted) return
+        const panels = document.querySelectorAll(NAV_PANEL_SELECTOR)
+        for (const panel of panels) {
+          const list = panel.querySelector(NAV_LIST_SELECTOR)
+          if (!list) continue
+          for (const cell of list.querySelectorAll(NAV_CELL_SELECTOR)) {
+            const label = cell.querySelector(NAV_LABEL_SELECTOR)
+            if (!label) continue
+            if (label.textContent.trim() !== wanted) continue
+            const glyph = cell.querySelector(NAV_ICON_SELECTOR)
+            if (!glyph) continue
+            // 先打标记（CSS 靠它把齿轮藏起来），再把 SVG 塞进去。
+            cell.setAttribute(NAV_MARK, '1')
+            // 幂等：重渲染/重开面板都可能让我们跑第二遍，已有就不再插。
+            if (!glyph.querySelector('svg[data-pc-navglyph]')) {
+              try { glyph.appendChild(createGlyphNode()) } catch { /* 插不进去也别崩 */ }
+            }
+          }
+        }
+      }
+      const schedule = () => {
+        if (queued || disposed) return
+        queued = true
+        // 下一帧再认：shell 可能在同一批 DOM 变更里刚把行插进来。
+        if (typeof requestAnimationFrame === 'function') requestAnimationFrame(claim)
+        else setTimeout(claim, 16)
+      }
+
+      const observer = new MutationObserver(schedule)
+      observer.observe(document.body, { childList: true, subtree: true })
+      schedule()
+
+      return () => {
+        disposed = true
+        try { observer.disconnect() } catch { /* nothing to disconnect */ }
+        for (const cell of document.querySelectorAll('[' + NAV_MARK + ']')) {
+          cell.removeAttribute(NAV_MARK)
+        }
+      }
+    }
+
+    /**
+     * 侧边栏图标的样式。
+     *
+     * 把宿主兜底的齿轮藏起来（visibility:hidden —— 保留它占的位置和 React 的
+     * 节点，只是看不见），然后在同一个格子里画我们的四道横线。
+     *
+     * m20392：原来走的是 CSS 伪元素 + mask-image 方案。那依赖 :root 上的一个
+     * 自定义属性 + data: URI，而那个属性一旦没被写进 style 标签（它不是内联
+     * 样式，样式重建时最容易丢），mask 就是空的 —— 用户实拍到的"图标没显示"
+     * 正是这个原因。现在改成真正的内联 SVG 子节点（由 installNavIcon 插进去），
+     * 不依赖任何自定义属性，也用不着 data:。齿轮仍然只是被隐藏，DOM 结构没有
+     * 被替换，React 手里那个节点还在原位。
+     */
+    const NAV_ICON_CSS = [
+      '[' + NAV_MARK + '] [class*="navIcon"]{visibility:hidden;position:relative}',
+      '[' + NAV_MARK + '] [class*="navIcon"]>svg[data-pc-navglyph]{',
+      'visibility:visible;position:absolute;inset:0;margin:auto;pointer-events:none;',
+      'width:16px;height:16px;display:block;color:currentColor;',
+      '}',
+    ].join('\n')
+
+    /**
+     * 造一个和 GlyphIcon 同形的 SVG 节点（DOM 版，不走 React）。
+     *
+     * 侧边栏那一行是 shell 自己的 React 节点，往里面塞非 React 子节点是安全的
+     * （React 不认识它，只会忽略），但**不能替换**它自己的 svg —— 那会在那一行
+     * 卸载时让 React removeChild 一个已脱离文档的节点，整个面板崩掉（见上面注释）。
+     */
+    function createGlyphNode() {
+      const NS_SVG = 'http://www.w3.org/2000/svg'
+      const svg = document.createElementNS(NS_SVG, 'svg')
+      svg.setAttribute('viewBox', '0 0 16 16')
+      svg.setAttribute('fill', 'none')
+      svg.setAttribute('aria-hidden', 'true')
+      svg.setAttribute('focusable', 'false')
+      svg.setAttribute('data-pc-navglyph', '1')
+      for (const ln of GLYPH_LINES) {
+        const rect = document.createElementNS(NS_SVG, 'rect')
+        rect.setAttribute('x', '3')
+        rect.setAttribute('y', String(ln.y))
+        rect.setAttribute('width', String(ln.w))
+        rect.setAttribute('height', '1.7')
+        rect.setAttribute('rx', '0.85')
+        rect.setAttribute('fill', 'currentColor')
+        svg.appendChild(rect)
+      }
+      return svg
     }
 
     /**
@@ -2900,6 +3333,16 @@ Output shape:
     // ── settings page (settings.section slot) ────────────────────────────────
     function SettingsPage(props) {
       const { t: tRaw } = props
+      // m20193：页头要显示插件名与版本号。名字写死（它就是 npm 包名），版本号
+      // 由宿主 /meta 从 index.js 读到的 package.json 里给（见 index.js），
+      // 拿不到就不画 —— 绝不在这里硬编码版本，否则发一次版就永远对不上。
+      const PLUGIN_NAME = 'dsh-prompt-chain'
+      // 仓库地址只写一处，标题链接和悬停提示都用它。
+      const GITHUB_URL = 'https://github.com/Nihao7-L/dsh-prompt-chain'
+      // 插槽 register 只给 options、不给自定义 props，所以版本号得自己去宿主
+      // 要：GET /meta 返回 index.js 读到的 package.json version（单一真相源）。
+      // 拉不到就不画 —— 绝不在这里硬编码版本，否则发一次版就永远对不上。
+      const [version, setVersion] = React.useState('')
       const [settings, setSettings] = React.useState(null)
       // m15052 ①：界面语言的入口搬到了设置弹窗头部那个切换按钮（LangToggle），
       // 它直接写 settingsStore；设置页自己这份 `settings` 快照不会立刻知道，
@@ -2997,6 +3440,10 @@ Output shape:
           api('/providers').then((d) => { if (alive) setProviders(d.providers || []) }).catch(() => { if (alive) setProviders([]) })
         }
         load()
+        // 版本号只取一次：它不会变（改了要重启宿主），没必要跟着 30 秒轮询跑。
+        api('/meta')
+          .then((d) => { if (alive && d && d.version) setVersion(String(d.version)) })
+          .catch(() => { /* 拿不到就不画版本号，不提示、不报错 */ })
         const id = setInterval(load, 30000)
         return () => { alive = false; clearInterval(id) }
       }, [])
@@ -3272,11 +3719,25 @@ Output shape:
       const save = () => {
         setBusy(true)
         setSaved(undefined)
-        api('/settings', { method: 'PUT', body: JSON.stringify(settings) })
+        // m20706 抓到的真 bug：点 CH/EN 调的是模块级 setUiLang()，它写的是
+        // settingsStore（全局真相源）；而这个表单里的 `settings` 是**另一份**
+        // 组件快照，拿不到那次改动。原来这里直接 JSON.stringify(settings)，
+        // 于是「点 EN → 点保存」会用旧快照（uiLang 仍是 auto）把 en 覆盖掉，
+        // 界面又变回中文。
+        // 修法：以 settingsStore 为底、用表单这份快照覆盖业务字段，只让
+        // settingsStore 独占的键（uiLang）从 store 取。这样两边都不丢。
+        const live = settingsStore.get() || {}
+        const merged = Object.assign({}, settings)
+        if (live.uiLang !== undefined) merged.uiLang = live.uiLang
+        api('/settings', { method: 'PUT', body: JSON.stringify(merged) })
           .then((d) => {
             lastRepairs = Array.isArray(d.repairs) ? d.repairs : []
-            setSettings(d.settings)
-            settingsStore.set(d.settings)
+            // 宿主回写的结果是最终真相：再把 uiLang 叠回去，防止老宿主不认识
+            // 这个字段、把它吃成默认值 auto。
+            const final = Object.assign({}, d.settings)
+            if (live.uiLang !== undefined) final.uiLang = live.uiLang
+            setSettings(final)
+            settingsStore.set(final)
             // 宿主已经把这份配置写进 config.json 了，本地不再有「未保存」的东西。
             pendingRef.current = false
             setSaved(true)
@@ -3290,7 +3751,7 @@ Output shape:
       // broken. It now says what it is doing, and a failed load says so too
       // instead of silently presenting defaults.
       if (settings == null) {
-        return h('div', { className: 'pe_root' },
+        return h('div', { className: 'pe_root', 'data-pc-page': '1' },
           h('div', { className: 'pe_callout', 'data-pe-state': 'loading' }, t('loading')),
         )
       }
@@ -3324,7 +3785,34 @@ Output shape:
       const panelBgs = [['clear', t('bgClear')], ['glass', t('bgGlass')], ['solid', t('bgSolid')]]
       const opacity = Math.min(100, Math.max(10, Number(settings.panelOpacity) || 100))
 
-      return h('div', { className: 'pe_root' },
+      return h('div', { className: 'pe_root', 'data-pc-page': '1' },
+        // m19942：页头。宿主只在左侧列里画分页名（见 shell 的 settings.section
+        // 列表），内容区没有标题，所以标题由本页自己画。
+        // m20392：布局照插件市场（dshmarket）那一行 ——
+        //     图标 + 中文主名（粗体、可点）+ 英文次名（灰）+ 版本号。
+        // 用户此前的 6 条要求仍然成立：图标在标题左边、名字是可点的 GitHub 链接、
+        // 后面跟版本号、不要那行灰说明。
+        h('div', { className: 'pe_head' },
+          h(GlyphIcon, { className: 'pe_head_icon' }),
+          // m20581：顺序是 图标 → 中文名 → 英文包名（带链接）→ 版本号 → CH/EN。
+          h('span', { className: 'pe_head_title' }, t('pluginTitle')),
+          h('a', {
+            className: 'pe_head_name',
+            href: GITHUB_URL,
+            target: '_blank',
+            rel: 'noreferrer noopener',
+            title: GITHUB_URL,
+          }, PLUGIN_NAME),
+          version ? h('span', { className: 'pe_head_ver' }, 'v' + version) : null,
+          // CH/EN 在**同一行**的最右端，右边缘对齐上面一行「打开配置文件」按钮的
+          // 左边缘。margin-right 由 installActionsInset 实测宿主 DOM 后写成 CSS
+          // 变量 --pc-actions-right（宿主规格是 50px，我们内容区只有 24px，而且
+          // 按钮宽度随缩放变化，所以必须实测、不能写死）。
+          h('div', {
+            className: 'pe_head_actions',
+            style: { marginLeft: 'auto', marginRight: 'calc(var(--pc-actions-right,50px) - 24px)' },
+          }, h(LangToggle, { t: tRaw })),
+        ),
         // 三条兜底提示都能关掉：加载失败（host 不可达/读不到）与配置被修复过。
         // 用户之前看到的就是"一片空白"，无从判断是坏了还是在加载。
         loadFailed && !hiddenNotes.failed
@@ -3432,9 +3920,9 @@ Output shape:
               // m16343：这里原来还有一行说明「按 N token 换算成约 M 字符后截断…」，
               // 用户圈出来说不要了——换算结果已经在 label 的括号里，多这一行只是噪音。
             ),
-            // m15052 ①：这里原来有一个「插件界面语言」下拉框，用户要求把它挪到
-            // 设置弹窗头部、和「打开配置文件」同一排，而且不要下拉框要切换按钮。
-            // 现在那个入口在 LangToggle（settings.action 插槽），这里不再重复。
+            // m15052 ①：这里原来有一个「插件界面语言」下拉框，用户要求换成切换按钮。
+            // m19942：按钮已从全局的 settings.action 插槽挪回本页页头（.pe_head），
+            // 这里仍然不再重复。
           ),
           // m14339：提示词区。第一行「内置（只读）」— 六个内置方案，正文只显示不
           // 可改，`翻译` 打开左右对照（左英右中）。第二行「我的」— 自建的能改、
@@ -3983,31 +4471,24 @@ Output shape:
 
       ctx.slots.inject('settings.section', () => ctx.slots.register({
         name: 'settings.section',
-        id: 'prompt-chain',
+        id: SECTION_ID,
         order: 40,
         label: () => t('nav'),
         locale: NS,
       }, SettingsPage))
 
-      // m15052 ①：把「中文 | English」切换按钮放进设置弹窗头部、和「打开配置文件」
-      // 同一排。这个位置是 DSH 自己开放的插槽 `settings.action`（list 型、scope
-      // root；host 往里面放的是 open-document 那一条，见
-      // @deepseek-ai/dsh-client-ui-settings-general/lib/client.js 的 children 声明
-      // 与它的 ctx.slots.inject('settings.action', …)），所以插件塞进去的按钮天然
-      // 就在「打开配置文件」左边，不需要去改别人的 DOM。
-      // order 必须小于 host 那条 open-document（order 0）才会排在它左边。
-      try {
-        ctx.slots.inject('settings.action', () => ctx.slots.register({
-          name: 'settings.action',
-          id: 'prompt-chain-lang',
-          order: -10,
-          locale: NS,
-        }, LangToggle))
-      } catch (error) {
-        // 插槽万一不可注入（宿主改版），也只能少一个按钮：绝不能因此让整个
-        // 插件激活失败 —— 那会连设置页一起消失。
-        reportDiag('lang-slot-failed', error)
-      }
+      // m20619：位置定稿 —— CH/EN 与插件名**同一行**，右边缘对齐上面一行
+      // 「打开配置文件」按钮的左边缘。宿主那边算出来是 50px、我们内容区只有
+      // 24px，而且按钮宽度随缩放/宿主版本变化，所以不写死像素：activate 里
+      // 起一个实测器把真实距离写进 CSS 变量 --pc-actions-right。
+      // 仍然不注册 settings.action（那个插槽只能排在按钮**左侧**），也就不会
+      // 再有 m19931 那个「别的分页也长出 CH/EN」的毛病。
+
+      // m20193：侧边栏导航行的图标（宿主是封闭白名单 + 兜底齿轮，只能走 DOM 层）。
+      ctx.effect(() => installNavIcon(() => t('nav')), 'prompt-chain: settings nav icon')
+
+      // m20619：实测「打开配置文件」按钮的位置，供页头 CH/EN 对齐用。
+      ctx.effect(() => installActionsInset((key) => t(key)), 'prompt-chain: header actions inset')
 
       // Positive beacon: proves the entry activated and records which injected
       // services this composition actually provided.
