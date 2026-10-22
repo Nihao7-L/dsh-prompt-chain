@@ -4,7 +4,9 @@
 
 # dsh-prompt-chain
 
-**在 DSH 输入框里按一下增强按钮，把随手写的草稿变成结构清晰、能直接执行的提示词——写长了还能一轮一轮接着说下去。**
+**在 DSH 输入框里按一下增强按钮，把一句话的要求改写成能直接执行的提示词；嫌短就继续生成，最多 5 轮。每轮都留成一个能一键回跳的历史版本，改了哪些字逐行对比给你看——结果实时写回输入框，不用复制粘贴。**
+
+**🎨 不想只是一个图标？按钮长什么样你做主**：6 组内置图标库（2 组静态表情、1 组手绘图片、3 组动图）加自己攒的表情包，随你换。
 
 [![Version](https://img.shields.io/badge/version-1.0.0-4f7cff?style=flat-square)](https://github.com/Nihao7-L/dsh-prompt-chain/releases)
 [![License](https://img.shields.io/badge/license-MIT-3da639?style=flat-square)](./LICENSE)
@@ -15,7 +17,7 @@
 
 </div>
 
-![演示：写草稿 → 点增强 → 继续生成 → 对比 → 换图标](docs/demo.gif)
+![演示：写草稿 → 点增强 → 继续生成 → 对比 → 换图标](https://raw.githubusercontent.com/Nihao7-L/dsh-prompt-chain/main/docs/demo.gif)
 
 <sub>18 秒看完：随手写一句 → 点增强按钮 → 继续生成 → 逐行对比 → 换图标。</sub>
 
@@ -25,12 +27,12 @@
 
 | 1 | 2 |
 | --- | --- |
-| ![输入框旁边的增强按钮](docs/01-composer.png) | ![改写结果面板](docs/02-panel.png) |
+| ![输入框旁边的增强按钮](https://raw.githubusercontent.com/Nihao7-L/dsh-prompt-chain/main/docs/01-composer.png) | ![改写结果面板](https://raw.githubusercontent.com/Nihao7-L/dsh-prompt-chain/main/docs/02-panel.png) |
 | **点输入框左边的按钮**——默认是圆形图标，可换成 emoji、图片或动图 | **结果实时写回输入框**，底栏有重新生成 / 继续生成 / 复制 / 完成 |
-| ![续写后的历史版本](docs/03-continue.png) | ![逐行对比](docs/04-diff.png) |
+| ![续写后的历史版本](https://raw.githubusercontent.com/Nihao7-L/dsh-prompt-chain/main/docs/03-continue.png) | ![逐行对比](https://raw.githubusercontent.com/Nihao7-L/dsh-prompt-chain/main/docs/04-diff.png) |
 | **接着往下写**，最多 5 轮，每轮都进历史，点任意一版回跳 | **绿色是新增、红色是删除**，顶栏直接给「N 处改动」 |
-| ![中英双栏提示词](docs/05-settings-prompt.png) | ![图标库与预览](docs/06-button-style.png) |
-| **6 个内置方案只读**，自建的最多 3 条；左英右中，英文那份才是发出去的 | **2 组静态 + 1 组手绘 + 3 组动图**，都能换成按钮图标 |
+| ![中英双栏提示词](https://raw.githubusercontent.com/Nihao7-L/dsh-prompt-chain/main/docs/05-settings-prompt.png) | ![图标库与预览](https://raw.githubusercontent.com/Nihao7-L/dsh-prompt-chain/main/docs/06-button-style.png) |
+| **6 个内置方案只读**，自建的最多 3 条；左英右中，英文那份才是发出去的 | **6 组图标**（2 静态 + 1 图片 + 3 动图），都能换成按钮图标 |
 
 ---
 

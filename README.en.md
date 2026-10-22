@@ -4,7 +4,9 @@
 
 # dsh-prompt-chain
 
-**One click on the enhance button in the DSH composer turns a rough draft into a precise, executable prompt — and when the answer is still too short, you keep going, round after round.**
+**One click in the DSH composer turns a rough request into a precise, executable prompt — then keep going: up to 5 continuation rounds, each saved as a one-click history version, with a line diff for every change. The result writes straight back to the composer, so there is nothing to copy and paste.**
+
+**🎨 Your button, your look**: six built-in icon packs (two emoji sets, one hand-drawn set, three animated GIF sets) plus any packs you build yourself.
 
 [![Version](https://img.shields.io/badge/version-1.0.0-4f7cff?style=flat-square)](https://github.com/Nihao7-L/dsh-prompt-chain/releases)
 [![License](https://img.shields.io/badge/license-MIT-3da639?style=flat-square)](./LICENSE)
@@ -15,7 +17,7 @@
 
 </div>
 
-![Demo: draft → enhance → continue → compare → custom icon](docs/demo.gif)
+![Demo: draft → enhance → continue → compare → custom icon](https://raw.githubusercontent.com/Nihao7-L/dsh-prompt-chain/main/docs/demo.gif)
 
 <sub>18 seconds: rough draft → click the button → continue → line diff → change the icon.</sub>
 
@@ -25,12 +27,12 @@
 
 | 1 | 2 |
 | --- | --- |
-| ![Enhance button next to the composer](docs/01-composer.png) | ![Rewrite result panel](docs/02-panel.png) |
+| ![Enhance button next to the composer](https://raw.githubusercontent.com/Nihao7-L/dsh-prompt-chain/main/docs/01-composer.png) | ![Rewrite result panel](https://raw.githubusercontent.com/Nihao7-L/dsh-prompt-chain/main/docs/02-panel.png) |
 | **Click the button left of the composer** — a round icon by default, swappable for an emoji, image or GIF | **The result writes straight back**; the bar has regenerate / continue / copy / done |
-| ![History after continuing](docs/03-continue.png) | ![Line-by-line diff](docs/04-diff.png) |
+| ![History after continuing](https://raw.githubusercontent.com/Nihao7-L/dsh-prompt-chain/main/docs/03-continue.png) | ![Line-by-line diff](https://raw.githubusercontent.com/Nihao7-L/dsh-prompt-chain/main/docs/04-diff.png) |
 | **Keep going** — up to 5 rounds; every round enters history, click any version to jump back | **Green added, red removed**, with a change count in the header |
-| ![Bilingual prompt panes](docs/05-settings-prompt.png) | ![Icon library and preview](docs/06-button-style.png) |
-| **6 read-only presets** plus up to 3 of your own; English on the left is what gets sent | **2 static + 1 hand-drawn + 3 animated** groups, all usable as the button icon |
+| ![Bilingual prompt panes](https://raw.githubusercontent.com/Nihao7-L/dsh-prompt-chain/main/docs/05-settings-prompt.png) | ![Icon library and preview](https://raw.githubusercontent.com/Nihao7-L/dsh-prompt-chain/main/docs/06-button-style.png) |
+| **6 read-only presets** plus up to 3 of your own; English on the left is what gets sent | **6 icon sets** (2 static + 1 image + 3 animated), all usable as the button icon |
 
 ---
 
