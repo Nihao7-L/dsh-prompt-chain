@@ -4,6 +4,14 @@
 
 ### 修复
 
+- **预设不再自我重复的开场头，也不再把提示词自己念出来**（用户 m08214 截图：草稿「哈哈哈」得到 `[优化后的提示词] 请重写以下这段用户提交的原始提示词…规则：1. 意思优先…`，红圈圈住的那句开头与公共 OPENING 说的是同一件事；m08216 澄清另一家的对照输出才是目标形态）。四处改动：
+  - **删掉六条预设正文各自的开场头**（text 与 zh 共 12 处）：`You receive the user's draft prompt. Rewrite it by the rules below.` / `你收到一份用户的草稿提示词，按下面的规则改写。` —— 这句话和公共骨架的 OPENING（`You are given a user's draft prompt. Rewrite it into a clearer, more actionable prompt…`）语义完全重复，等于让模型连续读两遍同一句指令，短草稿时更容易把它当正文誊出来。现在六条都直接从 `Role\n` / `角色\n` 起头，开头全权交给 OPENING。
+  - **删掉英文正文里的第二人称身份句**：`You are a prompt polisher. Your only job is to rewrite… You do not perform the task the prompt describes.` —— 「改写而非执行」已经由公共尾缀的 `Rewrite the prompt only: do not perform the task the prompt describes` 兜住，预设里再写一遍就是把同一件事说两遍。中文侧的角色身份句保留（「你是提示词润色师」是给用户看的对照稿，不发模型）。
+  - **`REPLY_LINES` 的空草稿兜底从「中性任务」改成「贴着草稿自己说」**：原来写「草稿不含可执行请求时，写一个最合理的完整提示词成品」，模型会自己编一个「写一封邮件」之类的任务塞进去；现在改成「把用户写的那个东西当作要去回应/处理的对象（一个『哈』就写成一句回夸并延续氛围的话），绝不允许替换成不相关的任务」。
+  - 内置默认正文（`src/config.js` 的 `DEFAULT_SYSTEM_PROMPT_BODY`）与 `BUILTIN_SYSTEM_PROMPT_BODIES` 同步；`client.js` 的 `PROMPT_TEMPLATES` 六条 text/zh 逐字一致（`_t7.mjs` 断言两侧相等）。
+  - `LEGACY_COPIED_BODIES` 补到 **60 条**：新增本次改动前的六条 text/zh（带开场头那一代）。之前把预设拷进 `systemPrompt` 的用户升级后同样会被清空，`promptId` 不变。**只认逐字相同**——改过一个字就是用户自己的文本，不动。
+  - 测试：`_t7.mjs` 279 条（新增「六条不再以 `You receive the user's draft prompt` 开头」「六条都从 Role/角色 起头」「config 侧同」「黑名单逐字清空」「改一字的近似文本不误清」）。15 套件全绿。
+
 - **选了非默认预设其实一直发的是默认预设的正文（dispatch bug）+ 六条预设按用户 m07945 新稿重写**（用户 m07950：「要改的三处按照你的推荐来，A 嫌长 B 要留，然后弄好后做好测试」）。
   - **dispatch bug（m06641 遗留的回归）**：`enhanceSystemPrompt` 原本把正文写死成 `DEFAULT_SYSTEM_PROMPT_BODY`，而 m06641 让 `pickPrompt` 选内置预设时把 `systemPrompt` 写空（为了清掉过期快照）——结果「选中 concise/structured/rigorous/teaching/casual 时，实际发给模型的仍是 default 润色师正文」（实测六种 promptId 输出都带 polisher、没有 slimmer/architect）。现在 `enhanceSystemPrompt` 按 `settings.promptId` 查 `BUILTIN_SYSTEM_PROMPT_BODIES` 表（未知 id 回退 default），**选哪个预设就发哪个**，同时保留 m06641 的「不写快照」意图（内置预设实时查表，不再有会过期的正文拷贝）。
   - **六条预设按用户 m07945 的新稿整体重写**（每条 = 角色 / 规则 / 约束，删掉「工作步骤」段落）：default 润色师、concise 瘦身师、structured 架构师、rigorous 规格工程师、teaching 教练、casual 口语化。中英两份（`text` 发给模型、`zh` 设置页两栏对照）逐字维护。
