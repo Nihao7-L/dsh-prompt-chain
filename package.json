@@ -1,6 +1,6 @@
 {
   "name": "dsh-prompt-chain",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "type": "module",
   "description": "One-click prompt rewriting in the DSH composer — keep going for up to 5 rounds, diff every change, and jump back to any version.",
   "main": "./index.js",

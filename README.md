@@ -4,11 +4,11 @@
 
 # dsh-prompt-chain
 
-**在 DSH 输入框里按一下增强按钮，把一句话的要求改写成能直接执行的提示词；嫌短就继续生成，最多 5 轮。每轮都留成一个能一键回跳的历史版本，改了哪些字逐行对比给你看——结果实时写回输入框，不用复制粘贴。**
+**⚡️DSH 输入框一键增强💪提示词(prompt)——嫌短就继续生成🔜，不满意就重新生成🔄；自动存档历史记录🕐，支持回退 ↩️；结果同步回输入框，差异逐行对比；🗺️显示界面🎨 提示词🪄按钮图标📍按键位置自己定制**
 
 **🎨 不想只是一个图标？按钮长什么样你做主**：6 组内置图标库（2 组静态表情、1 组手绘图片、3 组动图）加自己攒的表情包，随你换。
 
-[![Version](https://img.shields.io/badge/version-1.0.0-4f7cff?style=flat-square)](https://github.com/Nihao7-L/dsh-prompt-chain/releases)
+[![Version](https://img.shields.io/badge/version-1.1.0-4f7cff?style=flat-square)](https://github.com/Nihao7-L/dsh-prompt-chain/releases)
 [![License](https://img.shields.io/badge/license-MIT-3da639?style=flat-square)](./LICENSE)
 [![DSH](https://img.shields.io/badge/DSH-0.2.x-8b5cf6?style=flat-square)](#兼容性与限制)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-6b7280?style=flat-square)](#兼容性与限制)

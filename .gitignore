@@ -21,5 +21,6 @@ _grid/
 _chk/
 _drafts/
 _profile-backup-*/
+*.bak-*
 _*.mjs
 _*.py
