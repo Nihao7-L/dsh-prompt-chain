@@ -42,7 +42,7 @@
 | --- | --- |
 | Enhance | Reads the draft, rewrites it with the model, opens a result panel that edits the composer live |
 | Continue | Extends the result in rounds (max 5), shows "n rounds left", explains itself at the limit |
-| Regenerate | Re-runs from the **original draft**, ignoring edits made in the panel |
+| Regenerate | Two modes: **from the original draft** (drops panel edits and re-runs the first draft) or **from the last prompt** (re-runs the prompt actually sent to the model last round). Hover a menu item for the explanation |
 | History | Every version is kept; click a version to jump back; undo/redo to the very first draft |
 | Diff | Line-level added / removed / unchanged view with a change count |
 | Presets | 6 read-only built-ins + 3 of your own (create / rename / delete), bilingual panes, one-click free translation |
@@ -89,7 +89,7 @@ The plugin has two halves: the UI half (`client.js`) takes effect on a page refr
 ## Compatibility
 
 - `platform: web` — desktop and web builds, any OS.
-- `engines.dsh`: `^0.1.2-rc.1 || ^0.1.7-rc.2 || ^0.2.0-rc.1` (verified on 0.2.1-rc.2).
+- `engines.dsh`: `>=0.1.2-rc.1 <0.2.0 || >=0.2.0-rc.1 <0.3.0` (verified on 0.2.1-rc.3).
 - Enhancement goes through DSH's own model channel (session model by default) — no extra API key.
 - Free translation uses public endpoints (MyMemory, LibreTranslate mirror); when unavailable the English pane stays empty and enhancement still works.
 

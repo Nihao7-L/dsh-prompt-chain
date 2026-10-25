@@ -24,3 +24,6 @@ _profile-backup-*/
 *.bak-*
 _*.mjs
 _*.py
+
+# 更新记录只在本地维护，不随仓库发布
+CHANGELOG.md
