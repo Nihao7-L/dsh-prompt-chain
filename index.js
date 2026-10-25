@@ -118,6 +118,8 @@ function localUserMessage(framedText) {
   }
 }
 
+
+
 /** Read the dsh home directory without assuming a specific deployment. */
 function resolveDshHome(ctx) {
   if (process.env.DSH_HOME !== undefined && process.env.DSH_HOME !== '') return process.env.DSH_HOME
@@ -234,6 +236,10 @@ export function apply(ctx) {
     // 是正常的迁移，不是需要用户处理的修复——否则每加载一次老配置就报一条
     // repaired，设置页里会常驻一块黄条（用户对常驻提示很敏感）。
     const migratedIcon = typeof src.triggerIcon === 'string' && src.triggerIcon.trim() !== ''
+    // m15102: 面板背景老配置「透明 = clear / 不透明 = solid」迁到新五档里的极简白。
+    // 这是正常迁移，不是需要用户补救的坏值——否则老配置每次加载都会在设置页
+    // 挂一块「不是可识别的取值」的黄条（用户对常驻提示很敏感）。
+    const migratedPanelBg = ['clear', 'solid'].includes(src.panelBg)
     for (const key of Object.keys(DEFAULT_SETTINGS)) {
       if (!(key in src)) {
         if (fromFile) repairs.push({ key, action: 'missing', to: describeValue(normalized[key]) })
@@ -243,6 +249,10 @@ export function apply(ctx) {
       // 迁移牵动三个键：triggerIcon 被清空、triggerEmoji 拿到它、myEmojis 多一条。
       // 这三个差异都是这次迁移本身，不是坏值。
       if (migratedIcon && (key === 'triggerIcon' || key === 'triggerEmoji' || key === 'myEmojis')) {
+        repairs.push({ key, action: 'ok', value: describeValue(had) })
+        continue
+      }
+      if (migratedPanelBg && key === 'panelBg') {
         repairs.push({ key, action: 'ok', value: describeValue(had) })
         continue
       }
@@ -266,10 +276,24 @@ export function apply(ctx) {
 
   let settings = null
   let repairs = []
+  // m24271：配置文件在进程外被改动时（用户手改 config.json、换一个副本、同步工具
+  // 覆盖）也要生效。原来只在启动时读一次，之后永远是内存副本——用户改了设置看不
+  // 出任何变化，也没法察觉。这里记下读进来时的 mtime+size，每次请求前比对一次。
+  let configStamp = ''
+
+  function configSignature() {
+    try {
+      const st = fs.statSync(configFile)
+      return `${st.mtimeMs}:${st.size}`
+    } catch {
+      return ''
+    }
+  }
 
   function loadSettings() {
     let raw = null
     let source = 'defaults'
+    const before = configSignature()
     try {
       raw = JSON.parse(fs.readFileSync(configFile, 'utf8'))
       source = 'disk'
@@ -279,7 +303,31 @@ export function apply(ctx) {
     const result = sanitize(raw)
     settings = result.settings
     repairs = result.repairs
+    configStamp = source === 'disk' ? before : ''
     hostLog('settings-loaded', { source, repairs: result.repairs })
+    return settings
+  }
+
+  /**
+   * m24271：配置若在磁盘上变了，就地重新加载。每个请求进来前调用一次。
+   * stat 一次很便宜；只有 mtime/size 真的变了才去读文件、跑 sanitize。
+   * 读失败时保留内存里的旧配置，不能因为文件被占用就给用户一个空设置。
+   */
+  function ensureFreshSettings() {
+    const now = configSignature()
+    if (now === '' || now === configStamp) return settings
+    const keep = settings
+    try {
+      const raw = JSON.parse(fs.readFileSync(configFile, 'utf8'))
+      const result = sanitize(raw)
+      settings = result.settings
+      repairs = result.repairs
+      configStamp = now
+      hostLog('settings-reloaded', { source: 'disk', repairs: result.repairs })
+    } catch (error) {
+      settings = keep
+      hostLog('settings-reload-failed', { file: configFile, reason: String(error?.message ?? error) })
+    }
     return settings
   }
 
@@ -404,7 +452,7 @@ export function apply(ctx) {
    * 分支是死代码，用户也确认不需要参考上文。截断这件事则改为回报出去：
    * `truncated` 为真时客户端会在面板上说明输出被切了。
    */
-  async function runEnhance({ text, sessionId, provider, model, mode }) {
+  async function runEnhance({ text, sessionId, provider, model, mode, lastResult }) {
     const route = resolveRoute({ sessionId, provider, model })
     if (!route) {
       hostLog('enhance-no-route', { sessionId: sessionId ?? null })
@@ -414,8 +462,13 @@ export function apply(ctx) {
     if (draft === '') return { ok: false, error: { code: 'EMPTY_DRAFT', message: '输入框是空的，没有可增强的内容。' } }
 
     const continuing = mode === 'continue'
+    // m22250 问题1：客户端会带上「上一版结果」，让模型换一条思路、别原地
+    // 重复。老客户端不发这个字段（undefined）时这里就是空串，规则自然消失。
+    const previous = typeof lastResult === 'string' ? lastResult.trim() : ''
     // m21352：「跟随原文」由草稿自身的文字决定，所以要把它传进系统提示词组装。
-    const system = continuing ? continueSystemPrompt(settings, draft) : enhanceSystemPrompt(settings, draft)
+    const system = continuing
+      ? continueSystemPrompt(settings, draft, previous)
+      : enhanceSystemPrompt(settings, draft, previous)
     const framed = continuing ? continueUserText(draft) : enhanceUserText(text)
     const helpers = await loadLlmHelpers(logger.warn)
     const messages = [helpers.createUserMessage
@@ -426,18 +479,55 @@ export function apply(ctx) {
       : localUserMessage(framed)]
 
     const assembler = helpers.BlockAssembler ? new helpers.BlockAssembler() : createLocalAssembler()
-    try {
-      for await (const chunk of ctx.llm.stream({
-        provider: route.provider,
-        model: route.model,
-        messages,
-        system,
-        sessionId: typeof sessionId === 'string' && sessionId !== '' ? sessionId : undefined,
-      })) {
-        assembler.push(chunk)
+    // m07183 / m07744：这个 for await 必须有一个**能真正打断它**的看门狗。
+    // 旧实现只把 stalled 置成 true、等 for await 自己结束后才检查——但上游
+    // 一旦既不吐 chunk 也不结束，for await 永远走不到结尾，stalled 永远没机会
+    // 被读取，于是前端一直转圈（用户 m07741 复现）。这里改成用 Promise.race
+    // 把「消费流」和「看门狗」赛跑：看门狗先 reject，就立刻把这次请求判失败
+    // 返回，不再傻等。判定仍按「多久没收到新 chunk」而不是总时长，慢模型不误杀。
+    // m07875：阈值由用户拍板定为 60 秒（不是我替他定的 30 秒）。含义：只要模型
+    // 还在持续吐字就一直等下去，绝不打断；只有「连续 60 秒一个字都没收到」才判
+    // 卡死、切断并提示。慢模型哪怕 1 分钟才生成完，只要在出字就不受影响。
+    const STALL_MS = 60000
+    const startedAt = Date.now()
+    let lastChunkAt = startedAt
+    let consumeDone = false
+    const consume = (async () => {
+      try {
+        for await (const chunk of ctx.llm.stream({
+          provider: route.provider,
+          model: route.model,
+          messages,
+          system,
+          sessionId: typeof sessionId === 'string' && sessionId !== '' ? sessionId : undefined,
+        })) {
+          lastChunkAt = Date.now()
+          assembler.push(chunk)
+        }
+      } finally {
+        consumeDone = true
       }
+    })()
+    // 流最终自己结束（正常或报错）后，丢弃后台挂着的 consume，避免未处理拒绝。
+    consume.catch(() => {})
+    const stallError = new Promise((_, reject) => {
+      const iv = setInterval(() => {
+        if (consumeDone) { clearInterval(iv); return }
+        const silent = Date.now() - lastChunkAt
+        if (silent > STALL_MS) {
+          clearInterval(iv)
+          reject(Object.assign(new Error('STALLED'), { silentSeconds: Math.round(silent / 1000) }))
+        }
+      }, 1000)
+    })
+    try {
+      await Promise.race([consume, stallError])
     } catch (error) {
-      hostLog('enhance-failed', { provider: route.provider, model: route.model, message: String(error?.message ?? error) })
+      if (error && error.message === 'STALLED') {
+        hostLog('enhance-failed', { provider: route.provider, model: route.model, code: 'STALLED', ms: Date.now() - startedAt, silentSeconds: error.silentSeconds })
+        return { ok: false, error: { code: 'TIMEOUT', message: `模型 ${error.silentSeconds} 秒没有任何返回，已中止。请重试或换一个模型。` } }
+      }
+      hostLog('enhance-failed', { provider: route.provider, model: route.model, code: 'LLM_FAILED', ms: Date.now() - startedAt, message: String(error?.message ?? error) })
       return { ok: false, error: { code: 'LLM_FAILED', message: String(error?.message ?? error) } }
     }
 
@@ -446,7 +536,7 @@ export function apply(ctx) {
       hostLog('enhance-failed', { provider: route.provider, model: route.model, code: finish.failure?.code ?? 'LLM_FAILED' })
       return { ok: false, error: { code: finish.failure?.code ?? 'LLM_FAILED', message: finish.failure?.message ?? '模型调用失败。' } }
     }
-    const out = assembler.blocks()
+    const rawOut = assembler.blocks()
       .filter(block => block.type === 'text')
       .map(block => block.text)
       .join('')
@@ -455,29 +545,45 @@ export function apply(ctx) {
       .replace(/^```[a-z]*\n/, '')
       .replace(/\n```$/, '')
       .trim()
+    // m03943：模型偶尔会把**我们拼的用户消息包装**当成要处理的内容抄进正文。
+    // 实测（草稿只有「测试」两字那次）返回的是：
+    //   Continue this prompt. It stops here:
+    //   （空行）
+    //   测试
+    //   （空行）
+    //   请将以上不完整的提示词草稿…
+    // 这是间歇性的（同一批 6 条短草稿复跑就全是干净的），靠提示词堵不住。
+    // 但包装前缀是插件自己拼的、形状固定，所以在这里**确定性**地剥掉：如果输出
+    // 以包装前缀开头，就把它连同其后原样回显的草稿一起切掉，只留模型真正写的部分。
+    // m05454：user 消息不再有包装（两种任务都只发草稿原文），没有包装可剥。
+    const out = rawOut
     if (out === '') {
       hostLog('enhance-empty-output', { provider: route.provider, model: route.model })
       return { ok: false, error: { code: 'EMPTY_OUTPUT', message: '模型没有返回内容，请重试。' } }
     }
-    // A continuation is the draft plus what the model added; returning the whole
-    // thing keeps the client's diff and undo semantics identical to a rewrite.
-    const combined = continuing ? `${draft}\n${out}` : out
+    // 「续写」= 把面板上这一版已经生成过的内容当成输入，再喂给模型，让它在这份
+    // 文本的基础上继续补充、完善，返回一份**完整的**新版本。所以模型返回什么就是
+    // 什么，直接用（去掉代码围栏、去首尾空白），不做任何拼接、也不做事后去重——
+    // 草稿和输出之间没有「接缝」这回事，拼起来才是错的（用户 m03793：
+    // 「续写就是继续生成优化，什么叫做拼接。就是把已经生成过一次的内容再丢给模型」）。
+    // 重写和续写的数据流完全一样，区别只在提示词。
     // m15602：截断不再是静默的。上限是 maxTokens×4 个字符（见上面的注释），
     // 超出就切掉，并把这件事回报给客户端，由面板写明「输出被截断」。
     const cap = Math.max(1, Number(settings.maxTokens) > 0 ? Number(settings.maxTokens) * 4 : 8192)
-    const truncated = combined.length > cap
+    const truncated = out.length > cap
     hostLog('enhance-ok', {
       mode: continuing ? 'continue' : 'rewrite',
       provider: route.provider,
       model: route.model,
       source: route.source,
-      chars: combined.length,
+      chars: out.length,
       truncated,
+      ms: Date.now() - startedAt,
     })
     return {
       ok: true,
       value: {
-        text: combined.slice(0, cap),
+        text: out.slice(0, cap),
         truncated,
         mode: continuing ? 'continue' : 'rewrite',
         route: { provider: route.provider, model: route.model, source: route.source },
@@ -639,6 +745,8 @@ export function apply(ctx) {
   async function api(req, res) {
     const url = new URL(req.url ?? '/', 'http://x')
     const routePath = url.pathname.replace(/^\/api\/prompt-chain/, '') || '/'
+    // m24271：配置可能被进程外的编辑器改过，每个请求进来先确认一次。
+    ensureFreshSettings()
     try {
       if (req.method === 'GET' && routePath === '/meta') {
         return json(res, 200, {

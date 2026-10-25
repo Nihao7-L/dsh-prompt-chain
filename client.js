@@ -61,7 +61,7 @@ window.__ModuleLoader__.load({
         // m14339：内置表情被单删掉的黑名单 + 插件界面语言（auto/zh/en）。
         hiddenItems: [],
         uiLang: 'auto',
-        panelBg: 'clear',
+        panelBg: 'minimal',
         panelOpacity: 100,
         hotkey: true,
       }
@@ -174,6 +174,11 @@ window.__ModuleLoader__.load({
         pageIntro: '输入框里按 ✨ 把草稿改写成可执行的提示词，可连续续写 5 轮并随时回退到任意一版。',
         enhance: '增强提示词',
         working: '正在增强…',
+        // m07254 生成过程气泡的四个过程态短词，只描述「正在做什么」，不报错。
+        phasePreparing: '准备中…',
+        phaseConnecting: '连接中…',
+        phaseCalling: '调用中…',
+        phaseStreaming: '生成中…',
         enhanced: '已用模型重写提示词',
         nochange: '提示词已经很清晰，无需改动',
         empty: '输入框还是空的，先写点内容',
@@ -185,7 +190,23 @@ window.__ModuleLoader__.load({
         contLimit: '继续生成已达上限（最多 5 次）：文本越长模型越难接续，请用「重新生成」或手动改。',
         contLeft: '还可续写 {n} 次',
         chainReset: '已开始新一轮：上面那条的对比和撤销历史不再跟着走。',
-        regenHint: '用最初的草稿重新改写，不带上面板里改过的内容',
+        regenHint: '基于最初版本重新生成，不带上面板里改过的内容',
+        // m22259：下拉两侧的两个口径，以及下拉菜单本身的说明。
+        regenMenu: '选择重新生成的方式',
+        regenFromOriginal: '基于最初版本',
+        regenFromOriginalSub: '丢掉面板里的改动和续写，用最初那段重算',
+        regenFromLast: '基于上一次内容',
+        // m23425：这句解释只出现在悬停提示里（菜单里不再占一行，用户原话
+        // 「这个做的简单一些，就是下面这行的提示改为鼠标放置在上面的时候显示」）。
+        // 口径也跟着改了：「上一次」指上一轮**递出去的提示词**，不是面板里现在
+        // 这一版结果——见 regenerate('last')。
+        regenFromLastSub: '用上一轮递给模型的那段提示词，重新生成一次',
+        // m23079：菜单项**只选择、不执行**，选完回到底栏按主按钮再开始。
+        regenPickDone: '已切成「{name}」，按「重新生成」开始',
+        // m22266：菜单收紧成两行纯文字；按钮上挂一个短口径标签，一眼看出现在
+        // 算的是哪一份（用户原话「选择了哪一个按钮上也看不到是哪一个」）。
+        regenShortOriginal: '最初',
+        regenShortLast: '上一版',
         enhanceHint: '用输入框里最新的文字改写',
         truncatedNote: '输出被「最大输出长度」截断了：调大这个值，或先精简文本再生成。',
         draftFailed: '面板里的文字没能写回输入框：请手动复制过去。',
@@ -207,6 +228,12 @@ window.__ModuleLoader__.load({
         jumped: '已回到这一版',
         modeRewrite: '重写',
         modeContinue: '续写',
+        // m22250：历史第一条是链头草稿；模型回了和某版一样的文本会提示一句。
+        modeDraft: '最初',
+        // m05131：面板里手工改过字再点「继续生成」时，改字版自己先进历史
+        // （用户原话「把修改过后的当作一版丢进历史记录」），标签用「编辑」。
+        modeEdit: '编辑',
+        dupResult: '这版和已有的一版完全相同，已切到那一版',
         modeOther: '其它',
         dismiss: '关闭',
         route: '使用模型',
@@ -263,8 +290,12 @@ window.__ModuleLoader__.load({
         sysMineEmpty: '还没有自己的',
         sysPickMine: '选择我的一条',
         sysPickBuiltin: '选择内置方案',
-        sysPaneEn: '英文（发出去的）',
-        sysPaneZh: '中文（你写的）',
+        // m24283：六条内置预设的正文现在就是中文（用户 m04589 手写的六句话），
+        // 原文 / 译文两栏都是同一段中文，再挂「英文（发出去的）」「中文（你写的）」
+        // 这对标签就成了自相矛盾——用户截图上看到的就是两栏一模一样的中文，
+        // 却顶着「英文」「中文」两个头。改成按「做了什么」命名，跟语言无关。
+        sysPaneEn: '发出去的',
+        sysPaneZh: '原文',
         sysActive: '正在使用',
         sysDelete: '删除',
         sysMineName: '我的提示词 {n}',
@@ -297,9 +328,11 @@ window.__ModuleLoader__.load({
         triggerIconUpload: '上传图片',
         triggerIconClear: '清除图标',
         panelBg: '面板背景',
-        bgClear: '透明（看得见后面的字）',
-        bgGlass: '毛玻璃（背景模糊）',
-        bgSolid: '不透明',
+        bgMinimal: '极简白',
+        bgGlass: '毛玻璃',
+        bgDoodle: '手绘涂鸦',
+        bgHolo: '全息渐变',
+        bgCyber: '赛博朋克',
         panelOpacity: '背景不透明度',
         preview: '预览',
         previewTrigger: '按钮',
@@ -343,6 +376,21 @@ window.__ModuleLoader__.load({
         previewPermission: '完全权限',
         previewModel: '模型',
         diffTitle: '增强前后对比',
+        // m23861：对比标题后面那句「基准是哪一版」。{n} 是基准文本的字数，让
+        // 用户一眼看出这次是「和上一手的 N 字比」而不是和链头草稿比。
+        diffBaseFrom: ' · 基准 {n} 字',
+        // m24230：基准的来源。原来的标题只有「· 基准 25 字」，用户选了「基于
+        // 上一次内容」，可最初版本和上一版字数完全一样（同一段提示词的迭代），
+        // 光看字数根本分不出来，看着就像「还是拿最初版本比的」。把这句写进标题。
+        diffBaseSrc: ' · 基准：{src} {n} 字',
+        diffBaseOriginal: '最初版本',
+        diffBaseLast: '上一次内容',
+        diffBaseContinue: '上一版续写',
+        // m24240：来源后面挂上**具体是第几版**（编号就是「历史版本」列表里那个
+        // 序号），用户 m02370 原话「这个基准可以带上具体的历史版本的编号」。
+        // 光写「上一次内容」还得自己去数，编号一写就是「基准：上一次内容（第 7
+        // 版）· 18 字」，对着一看就知道比的是哪一条。
+        diffBaseVer: '（第 {v} 版）',
         // 下面这几条是 m05268 补的：预览要能说清三档「增强提示样式」的差别，
         // 用户 m05567：「解释的话太多了，留着功能的名字就行」——下面的 hint 只
         // 留能改变操作的硬信息，成句的解释全部删掉（名字就是说明）。
@@ -350,15 +398,16 @@ window.__ModuleLoader__.load({
         triggerOffset: '位置微调',
         triggerOffsetHint: '',
         resizeHint: '拖动改大小',
+    // m24205：文字框与历史版本之间的高度分隔条。
+    splitHint: '上下拖动改文字框高度，双击恢复',
         triggerIconHint: '',
         triggerEmojiHint: '',
         toastPreviewNative: '原生气泡',
         toastPreviewNone: '不显示提示',
-        toastPreviewNoneBody: '不弹面板',
         // 预览舞台里铺在面板背后的字：三档透明度靠它对比（m05706）。
         // 预览舞台里铺在面板背后的字（m05706）：三档透明度靠它对比；
         // m05885 要求改成**一段**幽默的话（原来是同一段重复三遍，读起来像卡带）。
-        toastPreviewBackdrop: '这段话躺在这里只有一个使命：给面板当背景板。它不参与改写、不进你的提示词、也不会被送去见模型——它只是安安静静地待在后面，等你拖动「不透明度」，看哪些字被面板吃掉、哪些字还能探出半个头。它见过太多凌晨三点的调参现场：有人为了 5% 的透明度和自己较劲，有人把面板调到全透明然后到处找面板在哪，也有人只是想让按钮看起来再顺眼一点。如果你一路读到了这里，说明你正在非常认真地对待一个像素级的细节——这很值得尊敬，不过记得偶尔抬头看看窗外。',
+        toastPreviewBackdrop: '本段文字唯一的使命，就是躺在面板后面当"背景板"。它不参与改写，不进你的提示词，更不会被送去见模型——它只负责在滑杆拖动时，任劳任怨地演示"透明、毛玻璃、手绘、全息、赛博"五种皮肤轮番上身。它见过太多深夜调参的故事：有人为了 3% 的透明度和自己较劲，把五个档位挨个点了个遍；有人把面板调成全透明，然后满世界找面板在哪；也有人只是想看清楚，毛玻璃到底是"真糊"还是"假糊"。如果你真的读到这里，说明你正在用显微镜对待一个像素级的细节——这份认真很值得尊敬，不过记得偶尔抬头，看看窗外。',
         added: '新增',
         removed: '删除',
         same: '未变',
@@ -385,6 +434,10 @@ window.__ModuleLoader__.load({
         pageIntro: 'Press ✨ in the composer to rewrite your draft into an actionable prompt — continue up to 5 rounds and jump back to any version.',
         enhance: 'Enhance prompt',
         working: 'Enhancing…',
+        phasePreparing: 'Preparing…',
+        phaseConnecting: 'Connecting…',
+        phaseCalling: 'Calling…',
+        phaseStreaming: 'Generating…',
         enhanced: 'Rewrote the prompt with the model',
         nochange: 'The prompt is already clear',
         empty: 'The input is still empty — write something first',
@@ -396,7 +449,15 @@ window.__ModuleLoader__.load({
         contLimit: 'Continue limit reached (5 rounds max): longer text only gets harder, use Regenerate or edit by hand.',
         contLeft: '{n} more continue(s) left',
         chainReset: 'New round: the diff and undo history of the previous version no longer apply.',
-        regenHint: 'Rewrite from the very first draft, without your edits in the panel',
+        regenHint: 'Regenerate from the very first draft, without your edits in the panel',
+        regenMenu: 'Choose how to regenerate',
+        regenFromOriginal: 'From the original',
+        regenFromOriginalSub: 'Rebuild from the first draft, dropping panel edits and continuations',
+        regenFromLast: 'From the last prompt',
+        regenFromLastSub: 'Re-run the prompt that was sent last time',
+        regenPickDone: 'Switched to "{name}" — press Regenerate to start',
+        regenShortOriginal: 'first',
+        regenShortLast: 'last',
         enhanceHint: 'Rewrite the latest text in the composer',
         truncatedNote: 'Output was cut off by "Max output tokens": raise it, or shorten the text and run again.',
         draftFailed: 'The panel text could not be written back into the composer: copy it manually.',
@@ -416,6 +477,9 @@ window.__ModuleLoader__.load({
         jumped: 'Jumped back to this version',
         modeRewrite: 'Rewrite',
         modeContinue: 'Continue',
+        modeDraft: 'Original',
+        modeEdit: 'Edited',
+        dupResult: 'Identical to an existing version — jumped to it',
         modeOther: 'Other',
         dismiss: 'Dismiss',
         route: 'Model used',
@@ -471,8 +535,8 @@ window.__ModuleLoader__.load({
         sysMineEmpty: 'Nothing of your own yet',
         sysPickMine: 'Pick one of mine',
         sysPickBuiltin: 'Pick a built-in plan',
-        sysPaneEn: 'English (what gets sent)',
-        sysPaneZh: 'Chinese (what you wrote)',
+        sysPaneEn: 'What gets sent',
+        sysPaneZh: 'Original',
         sysActive: 'In use',
         sysDelete: 'Delete',
         sysMineName: 'My prompt {n}',
@@ -505,9 +569,11 @@ window.__ModuleLoader__.load({
         triggerIconUpload: 'Upload image',
         triggerIconClear: 'Clear icon',
         panelBg: 'Panel background',
-        bgClear: 'Transparent (the text behind shows through)',
-        bgGlass: 'Frosted glass (blurred backdrop)',
-        bgSolid: 'Opaque',
+        bgMinimal: 'Minimal white',
+        bgGlass: 'Frosted glass',
+        bgDoodle: 'Hand-drawn doodle',
+        bgHolo: 'Holographic gradient',
+        bgCyber: 'Cyberpunk',
         panelOpacity: 'Background opacity',
         preview: 'Preview',
         previewTrigger: 'Button',
@@ -542,16 +608,22 @@ window.__ModuleLoader__.load({
         previewPermission: 'Full access',
         previewModel: 'Model',
         diffTitle: 'Before / After',
+        diffBaseFrom: ' · vs {n} chars',
+        diffBaseSrc: ' · vs {src}, {n} chars',
+        diffBaseOriginal: 'original',
+        diffBaseLast: 'last prompt',
+        diffBaseContinue: 'last continuation',
+        diffBaseVer: ' (version {v})',
         diffEmpty: 'Nothing changed this run (the text came back as-is).',
         triggerOffset: 'Position fine-tune',
         triggerOffsetHint: '',
         resizeHint: 'Drag to resize',
+    splitHint: 'Drag up or down to resize the text box; double-click to reset',
         triggerIconHint: '',
         triggerEmojiHint: '',
         toastPreviewNative: 'Native bubble',
         toastPreviewNone: 'No toast',
-        toastPreviewNoneBody: 'No panel',
-        toastPreviewBackdrop: 'This paragraph has exactly one job: to be the backdrop. It is not rewritten, it does not enter your prompt, and it never gets sent to a model — it just sits back here while you drag the opacity slider, watching which words the panel swallows and which ones manage to poke their heads out. It has seen things: 3 a.m. tweaks over five percent of transparency, panels set to fully transparent and then hunted for, buttons nudged one pixel at a time for reasons nobody could quite explain. If you have read this far, you are taking a pixel-level detail very seriously — admirable, but do look out of the window once in a while.',
+        toastPreviewBackdrop: 'This paragraph has exactly one job: to sit behind the panel and be the "backdrop". It is never rewritten, never enters your prompt, and never meets a model — it just dutifully demonstrates, as you drag the slider, five skins taking turns: transparent, frosted glass, hand-drawn, holographic, and cyberpunk. It has witnessed too many 3 a.m. tuning sessions: someone fighting over three percent of opacity, clicking through all five modes; someone dialing the panel to fully transparent and then hunting for the panel; someone just trying to figure out whether frosted glass is genuinely blurry or faking it. If you have actually read this far, you are examining a pixel-level detail under a microscope — admirable, genuinely, but do look out of the window once in a while.',
         added: 'Added',
         removed: 'Removed',
         same: 'Unchanged',
@@ -591,7 +663,7 @@ window.__ModuleLoader__.load({
 // .pe_trigger_wrap 是位置控制的载体：它必须自己是一个 flex item 才能吃
 // 到 order / margin / transform。设置里给按钮加的内联样式就打在它身上，
 // 所以它不能带任何会影响布局的属性（比如 padding / border / background）。
-.pe_trigger_wrap{display:inline-grid;place-items:center;flex:none;padding:0;margin:0;border:none;background:none;line-height:0;cursor:pointer;transition:transform .14s ease}
+.pe_trigger_wrap{position:relative;display:inline-grid;place-items:center;flex:none;padding:0;margin:0;border:none;background:none;line-height:0;cursor:pointer;transition:transform .14s ease}
 /* m17428：生成中按钮仍可点（那一下是中断），所以光标不能退回 default。 */
 .pe_trigger_wrap,.pe_trigger_wrap:disabled{cursor:pointer !important}
 .trigger .pe_trigger_wrap{flex:0 0 auto}
@@ -621,16 +693,82 @@ window.__ModuleLoader__.load({
 .pe_trigger_text:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover-solid);color:var(--dsw-alias-label-primary)}
 .pe_spin{animation:pe-spin 1s linear infinite}
 @keyframes pe-spin{to{transform:rotate(360deg)}}
+/* m07254 生成过程气泡：锚在触发按钮正上方，淡玻璃、防误触、只显示过程态
+   （准备中/连接中/调用中/生成中），不负责报错——错误一律走旧 toast。
+   用 position:fixed + 按钮的 getBoundingClientRect 定位，这样宿主的输入区
+   包裹层就算带 overflow:hidden 也裁不掉它（absolute 会被裁）。
+   m07614：不要背景框，只留「圆点 + 文字」，字号也收小到 11px。 */
+.pe_busy_bubble{position:fixed;z-index:9998;display:inline-flex;align-items:center;gap:4px;transform:translate(-50%,-100%);font-size:11px;line-height:1;color:var(--dsw-alias-label-secondary,var(--dsw-alias-label-tertiary));white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .18s ease}
+.pe_busy_bubble.pe_on{opacity:1}
+.pe_busy_bubble .pe_dot{width:4px;height:4px;border-radius:999px;background:var(--dsw-alias-state-business-primary,var(--dsw-alias-label-secondary));flex:none}
+@media (prefers-color-scheme:dark){.pe_busy_bubble{color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary))}}
 /* ── enhance bubble: floating, draggable, editable, user-dismissed ── */
 .pe_bubbleroot{position:fixed;z-index:9999;pointer-events:none}
 /* --pe-panel-alpha is written inline by the Bubble from the panelOpacity
    setting, so one rule covers every bg mode and every slider position. */
 .pe_bubble{--pe-panel-alpha:100%;position:relative;display:flex;flex-direction:column;box-sizing:border-box;pointer-events:auto;width:720px;max-width:min(720px,92vw);height:min(620px,84vh);border-radius:var(--dsw-radius-md,12px);corner-shape:var(--dsw-corner-shape);border:1px solid color-mix(in srgb,var(--dsw-alias-border-l3,var(--dsw-alias-border-l2)) calc(var(--pe-panel-alpha) + 0%),transparent);background-color:color-mix(in srgb,var(--dsw-alias-bg-layer-2) var(--pe-panel-alpha),transparent);box-shadow:0 10px 30px rgb(0 0 0 / 16%),0 2px 6px rgb(0 0 0 / 10%),0 0 0 1px rgb(0 0 0 / 5%);font-size:12.5px;line-height:1.5;color:var(--dsw-alias-label-primary);overflow:hidden;animation:pe-bubble-in .16s cubic-bezier(.16,1,.3,1)}
-/* 面板背景：bg 档给底色基调，--pe-panel-alpha 再按滑杆降低不透明度，
-   所以「透明/毛玻璃/不透明」三档可以和任意百分比组合。 */
+/* 面板背景：五个风格档由 bg 类给出各自基调，--pe-panel-alpha（内联来自
+   滑杆）再统一按百分比降低整块面板的透明度。所以五档 × 任意 10–100% 都能组合。 */
+/* minimal 极简白：近纯白实底 + 极细边框 + 轻阴影，最朴素的一档。 */
+.pe_bubble.bg_minimal{background-color:color-mix(in srgb,var(--dsw-alias-bg-layer-1,#fff) var(--pe-panel-alpha),transparent);border-color:color-mix(in srgb,var(--dsw-alias-border-l2) calc(var(--pe-panel-alpha) + 20%),transparent)}
+/* glass 毛玻璃：现成的模糊 + 饱和度。 */
 .pe_bubble.bg_glass{backdrop-filter:blur(16px) saturate(1.5);-webkit-backdrop-filter:blur(16px) saturate(1.5)}
-.pe_bubble.bg_solid{background-color:color-mix(in srgb,var(--dsw-alias-bg-layer-2,#fff) var(--pe-panel-alpha),transparent)}
-.pe_bubble.bg_solid .pe_edit,.pe_bubble.bg_solid .pe_diff_lines{background:var(--dsw-alias-bg-layer-1)}
+/* doodle 手绘涂鸦：暖纸色底 + 手绘感的不规则 wobbly 圆角边框 + 手绘阴影。
+   内容区也走暖纸色（而不是默认的白色），整块面板才看得出纸感，不然被白底盖住
+   像没换一样。
+   m24201（用户：「手绘涂鸦样式变化太小了，改的变化大一点」）：原来只是把白底换成
+   近白的暖色 #fdf6e3、边框 2px、阴影 4px —— 在白页面上几乎看不出区别。现在：
+   ① 底色加深成明显的米黄纸张色，并叠一层横格纸纹（repeating-linear-gradient）；
+   ② 边框改成 2.5px 深墨色、四角各自不同的 wobbly 半径（像拿笔随手勾的）；
+   ③ 阴影改成两层硬投影（墨色偏移 + 淡色第二层），像贴纸贴在纸上；
+   ④ 标题栏换成牛皮纸色带下划线，标题用粗一点的墨色字；
+   ⑤ 正文/编辑区改成米白便签色并配手写感的深墨字色。 */
+.pe_bubble.bg_doodle{
+  background-color:color-mix(in srgb,#f7e6bf calc(var(--pe-panel-alpha) + 25%),transparent);
+  background-image:repeating-linear-gradient(0deg,rgb(146 109 51/.16) 0 1px,transparent 1px 22px);
+  border-radius:14px 20px 12px 18px;
+  border:2.5px solid color-mix(in srgb,#3f3222 calc(var(--pe-panel-alpha)*.5 + 30%),transparent);
+  box-shadow:5px 6px 0 color-mix(in srgb,#3f3222 calc(var(--pe-panel-alpha)*.26),transparent),9px 11px 0 color-mix(in srgb,#3f3222 calc(var(--pe-panel-alpha)*.10),transparent);
+}
+.pe_bubble.bg_doodle .pe_hd{background:color-mix(in srgb,#eed9a8 calc(var(--pe-panel-alpha) + 30%),transparent);border-bottom:2px solid color-mix(in srgb,#3f3222 calc(var(--pe-panel-alpha)*.4 + 22%),transparent)}
+.pe_bubble.bg_doodle .pe_hd_title{color:#3f3222;font-weight:760;letter-spacing:.2px}
+.pe_bubble.bg_doodle .pe_edit,.pe_bubble.bg_doodle .pe_diff_lines,.pe_bubble.bg_doodle .pe_results_list{background:color-mix(in srgb,#fdf8ea calc(var(--pe-panel-alpha) + 35%),transparent);border-radius:6px 10px 7px 9px;color:#2f2618}
+.pe_bubble.bg_doodle .pe_edit{border-color:color-mix(in srgb,#3f3222 calc(var(--pe-panel-alpha)*.32 + 18%),transparent);border-width:1.5px}
+.pe_bubble.bg_doodle .pe_ft{background:color-mix(in srgb,#eed9a8 calc(var(--pe-panel-alpha) + 25%),transparent);border-top:2px solid color-mix(in srgb,#3f3222 calc(var(--pe-panel-alpha)*.4 + 22%),transparent)}
+.pe_bubble.bg_doodle .pe_act,.pe_bubble.bg_doodle .pe_results_toggle,.pe_bubble.bg_doodle .pe_hd_btn,.pe_bubble.bg_doodle .pe_hd_x{color:#3f3222;border-color:color-mix(in srgb,#3f3222 calc(var(--pe-panel-alpha)*.4 + 20%),transparent)}
+.pe_bubble.bg_doodle .pe_result_item{color:#4a3c26}
+.pe_bubble.bg_doodle .pe_result_item.on{background:color-mix(in srgb,#c9a15e 26%,transparent);border-color:color-mix(in srgb,#3f3222 42%,transparent)}
+.pe_bubble.bg_doodle .pe_note{color:#6b5738}
+/* holo 全息渐变：彩虹 conic 渐变。渐变 image 没法用 color-mix 吃透明度，所以把
+   渐变画在 ::before 上，让它的整体可见度随 --pe-panel-alpha 缩放（alpha 100=满
+   彩虹，alpha 低=彩虹淡下去、后面页面透上来）。
+   m23861：以前内容区只铺一层 calc(alpha*.82) 的白，满色时也才 82% 白，彩虹从底
+   下透上来把正文压成一片看不清的糊（用户截图「这个背景样式完全看不清了」）。
+   现在渐变整体压到 .55 封顶，内容区改成不透明的白色卡片（alpha 100 时纯白），
+   文字区永远在自己的实底上，彩虹只在标题/底栏的边饰上露出来。 */
+.pe_bubble.bg_holo{background-color:color-mix(in srgb,var(--dsw-alias-bg-layer-1,#fff) var(--pe-panel-alpha),transparent);position:relative;overflow:hidden}
+.pe_bubble.bg_holo::before{content:"";position:absolute;inset:0;border-radius:inherit;background:conic-gradient(from 210deg at 50% 30%,#6366f1,#22d3ee,#34d399,#facc15,#f472b6,#6366f1);opacity:calc(var(--pe-panel-alpha)*.55);pointer-events:none}
+.pe_bubble.bg_holo::after{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(160deg,rgb(255 255 255/.35),rgb(255 255 255/.06) 55%,transparent 78%);pointer-events:none}
+.pe_bubble.bg_holo .pe_hd,.pe_bubble.bg_holo .pe_ft{position:relative;background-color:color-mix(in srgb,var(--dsw-alias-bg-layer-1,#fff) calc(var(--pe-panel-alpha)*.72),transparent)}
+.pe_bubble.bg_holo .pe_edit,.pe_bubble.bg_holo .pe_diff_lines,.pe_bubble.bg_holo .pe_results{position:relative;background-color:color-mix(in srgb,var(--dsw-alias-bg-layer-1,#fff) var(--pe-panel-alpha),transparent)}
+.pe_bubble.bg_holo .pe_body{position:relative}
+/* cyber 赛博朋克：深色底 + 霓虹青/品红描边辉光 + 扫描线（StyleKit 赛博动漫风）。 */
+.pe_bubble.bg_cyber{background-color:color-mix(in srgb,#0b0f1e calc(var(--pe-panel-alpha) + 15%),transparent);border:1px solid color-mix(in srgb,#22d3ee calc(var(--pe-panel-alpha) + 30%),transparent);box-shadow:0 0 14px color-mix(in srgb,#22d3ee calc(var(--pe-panel-alpha)*.55),transparent),0 0 0 1px color-mix(in srgb,#f472b6 calc(var(--pe-panel-alpha)*.4),transparent);position:relative;color:var(--dsw-alias-label-primary)}
+.pe_bubble.bg_cyber::before{content:"";position:absolute;inset:0;border-radius:inherit;background:repeating-linear-gradient(0deg,rgb(255 255 255/.035) 0 1px,transparent 1px 3px);pointer-events:none}
+/* m23861：赛博朋克的深底上文字继承的是浅色主题的 --label-primary（近黑），
+   满色时正文等于黑字压深蓝天——同样看不清。所有文字统一换成亮色，正文区再铺
+   一层更深的实底把扫描线挡在文字层后面。 */
+.pe_bubble.bg_cyber{color:#e6edf7}
+.pe_bubble.bg_cyber .pe_hd .pe_hd_title{color:#67e8f9}
+.pe_bubble.bg_cyber .pe_edit,.pe_bubble.bg_cyber .pe_diff_lines,.pe_bubble.bg_cyber .pe_results{position:relative;color:#e6edf7;background-color:color-mix(in srgb,#0b0f1e calc(var(--pe-panel-alpha)*.78),transparent)}
+.pe_bubble.bg_cyber .pe_body{position:relative}
+.pe_bubble.bg_cyber .pe_hd_btn,.pe_bubble.bg_cyber .pe_hd_x{color:#9fc4e0}
+.pe_bubble.bg_cyber .pe_hd_btn:hover,.pe_bubble.bg_cyber .pe_hd_x:hover{color:#e6edf7;background:color-mix(in srgb,#22d3ee 18%,transparent)}
+.pe_bubble.bg_cyber .pe_ft{background-color:color-mix(in srgb,#0b0f1e calc(var(--pe-panel-alpha)*.86),transparent);position:relative}
+.pe_bubble.bg_cyber .pe_act,.pe_bubble.bg_cyber .pe_uh_btn{color:#cfe2f5;border-color:color-mix(in srgb,#22d3ee 40%,transparent)}
+.pe_bubble.bg_cyber .pe_note{color:#8fb4cc}
+.pe_bubble.bg_cyber .pe_result_item{color:#cfe2f5}
+.pe_bubble.bg_cyber .pe_results_toggle{color:#8fb4cc}
 .pe_hd{background:color-mix(in srgb,var(--dsw-alias-label-primary) calc(var(--pe-panel-alpha) * .06),transparent)}
 .pe_bubble .pe_edit,.pe_bubble .pe_diff_lines{background:color-mix(in srgb,var(--dsw-alias-bg-layer-1) calc(var(--pe-panel-alpha) * .58),transparent)}
 @keyframes pe-bubble-in{from{opacity:0;transform:translateY(6px) scale(.985)}to{opacity:1;transform:none}}
@@ -649,12 +787,16 @@ window.__ModuleLoader__.load({
 .pe_hd_x:hover{background:color-mix(in srgb,var(--dsw-alias-label-primary) 10%,transparent);color:var(--dsw-alias-label-primary)}
 /* 缩放抓手（m06674：「这个框不能改变大小」）：右下角两道斜杠，只在真面板上画。
    底栏右侧因此多留一条 26px 的空带（见 .pe_ft 的 padding），免得它和「完成」
-   按钮叠在一起抢点击。 */
-.pe_rz{position:absolute;right:2px;bottom:2px;width:18px;height:18px;cursor:nwse-resize;color:var(--dsw-alias-label-tertiary);opacity:.55;touch-action:none}
-.pe_rz:hover{opacity:1}
+   按钮叠在一起抢点击。
+   m24201（用户：「显示文字框不能拖动缩短放大」）：抓手原来 right/bottom 各 2px，
+   被 .pe_ft 的实色底色整块压在下面——z-index 没有、pointer-events 抢不到，等于
+   根本点不着。提到面板层级最上（z-index 6）、热区放大到 22px、并加一点底色让
+   它在任何背景档上都看得见。 */
+.pe_rz{position:absolute;right:0;bottom:0;z-index:6;width:22px;height:22px;cursor:nwse-resize;color:var(--dsw-alias-label-tertiary);opacity:.7;touch-action:none;border-bottom-right-radius:inherit}
+.pe_rz:hover{opacity:1;color:var(--dsw-alias-state-business-primary);background:color-mix(in srgb,var(--dsw-alias-state-business-primary) 12%,transparent)}
 .pe_rz::before,.pe_rz::after{content:'';position:absolute;border-right:2px solid currentColor;border-bottom:2px solid currentColor;border-radius:0 0 3px 0}
-.pe_rz::before{right:3px;bottom:3px;width:10px;height:10px}
-.pe_rz::after{right:6px;bottom:6px;width:5px;height:5px}
+.pe_rz::before{right:4px;bottom:4px;width:11px;height:11px}
+.pe_rz::after{right:8px;bottom:8px;width:5px;height:5px}
 .pe_body{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;overflow:auto;padding:10px 12px 0}
 /* 失败面板的原文（m12699）：整段换行 + 可选中，标题行是拖拽区（user-select:none）
    且单行省略号，所以正文必须自己承担「看得全 + 复制得了」这两件事。 */
@@ -662,6 +804,19 @@ window.__ModuleLoader__.load({
 .pe_msg{font-size:12.5px;line-height:1.5;white-space:pre-wrap;word-break:break-word}
 .pe_msg.err{color:var(--dsw-alias-state-error-primary)}
 .pe_edit{display:block;width:100%;box-sizing:border-box;font:inherit;font-size:12.5px;line-height:1.55;resize:none;flex:1 1 auto;min-height:150px;padding:9px 10px;border-radius:var(--dsw-radius-sm,8px);corner-shape:var(--dsw-corner-shape);border:1px solid color-mix(in srgb,var(--dsw-alias-border-l2) 85%,transparent);background:color-mix(in srgb,var(--dsw-alias-bg-layer-1) 58%,transparent);color:var(--dsw-alias-label-primary);transition:border-color .16s ease,box-shadow .16s ease}
+/* 文字框自己的高度（m24205，用户：「显示文字框不能拖动缩短放大，我说的区域
+   是历史版本上面那块」）：原来 .pe_edit 是 flex:1 1 auto，高度由 .pe_body 里
+   剩下的空间决定，只能拖整面板右下角，连带历史版本一起变，没法只收放文字框。
+   拖过分隔条之后这里写死 height、并让 flex 不再伸缩，历史版本就顶到下面去，
+   面板总高不变。 */
+.pe_edit.manual{flex:0 0 auto;min-height:56px}
+/* 文字框与下方历史版本之间的拖拽分隔条：一条 6px 的可抓带，中间一道短线当把手。
+   只在「有历史版本列表」时才有意义，所以由 JSX 决定要不要画。 */
+.pe_split{flex:none;position:relative;height:9px;margin:2px 0 1px;cursor:ns-resize;touch-action:none;display:flex;align-items:center;justify-content:center;color:var(--dsw-alias-label-tertiary)}
+.pe_split::before{content:'';width:34px;height:3px;border-radius:2px;background:currentColor;opacity:.42;transition:opacity .14s ease,background-color .14s ease}
+.pe_split:hover::before{opacity:.95;background:var(--dsw-alias-state-business-primary)}
+.pe_split.dragging::before{opacity:1;background:var(--dsw-alias-state-business-primary)}
+.pe_prev .pe_split{display:none}
 .pe_edit:focus{outline:none;border-color:color-mix(in srgb,var(--dsw-alias-state-business-primary) 66%,transparent);box-shadow:0 0 0 3px color-mix(in srgb,var(--dsw-alias-state-business-primary) 14%,transparent)}
 .pe_note{flex:none;margin-top:6px;font-size:11px;color:var(--dsw-alias-label-tertiary)}
 /* 功能 6：字数 / token 读数。m05567 说两行小字太占地方，所以它不再单独占一
@@ -670,12 +825,26 @@ window.__ModuleLoader__.load({
 .pe_est{font-size:10.5px;color:var(--dsw-alias-label-quaternary,var(--dsw-alias-label-tertiary));font-variant-numeric:tabular-nums}
 .pe_note_warn{color:var(--dsw-alias-label-error,#d9534f)}
 /* ── 结果历史（功能 3）────────────────────────────────────────────────── */
-.pe_results{flex:none;margin-top:8px}
+/* m24258：「历史版本」那一行贴左、离上面近——只改这一行，下面展开的列表一律原样。
+   用户原话：「空的太宽的地方是 1 这个位置是"历史记录"这四个字的位置这行太宽了，不
+   是下面显示的位置区域」，随后「还是贴左，然后稍微距离上面的位置近一些」，以及
+   「下面的不要动就和图片中的一样」。
+   ⚠ 注意：容器必须保持普通块盒（原版就是 flex:none 加 margin-top:8px）。块盒在
+   .pe_body 这个纵向 flex 里默认 stretch，宽度天然等于内容区宽，也就是说「贴左」
+   和「下面列表满宽」在原版结构里本来就不冲突：胶囊是 inline-flex，在块盒里天然贴
+   左；列表是纵向 flex，条目 width:100% 跟着满宽的块盒走。
+   m24258 第一版错在把容器改成了 display:flex 加 flex-direction:column 加
+   align-items:flex-start 加 align-self:flex-start：容器收缩成 max-content 宽，
+   条目 width:100% 只等于那个收缩后的宽度，于是每条只到摘要长度就断（用户
+   m02754：「怎么还是这么短」）。所以这里只改一件事：margin-top 从 8px 改到 2px，
+   把胶囊往上提。 */
+.pe_results{flex:none;margin-top:2px;border-radius:var(--dsw-radius-sm,8px);corner-shape:var(--dsw-corner-shape)}
 .pe_results_toggle{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:11px;padding:3px 9px;border-radius:999px;border:1px solid color-mix(in srgb,var(--dsw-alias-border-l2) 80%,transparent);background:color-mix(in srgb,var(--dsw-alias-bg-layer-1) 58%,transparent);color:var(--dsw-alias-label-secondary,var(--dsw-alias-label-tertiary));cursor:pointer;transition:border-color .16s ease,color .16s ease}
 .pe_results_toggle:hover{border-color:color-mix(in srgb,var(--dsw-alias-border-l1) 90%,transparent);color:var(--dsw-alias-label-primary)}
 .pe_results_toggle.on{border-color:color-mix(in srgb,var(--dsw-alias-state-business-primary) 55%,transparent);color:var(--dsw-alias-state-business-primary)}
 .pe_results_n{display:grid;place-items:center;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:color-mix(in srgb,var(--dsw-alias-label-primary) 12%,transparent);font-size:10px;font-weight:700;font-variant-numeric:tabular-nums}
-.pe_results_list{display:flex;flex-direction:column;gap:4px;margin-top:6px;max-height:132px;overflow:auto;overscroll-behavior:contain}
+/* m24201 的圆角保留：滚动容器自己也要圆角，否则滚动时子项被裁成直角。 */
+.pe_results_list{display:flex;flex-direction:column;gap:4px;margin-top:6px;max-height:132px;overflow:auto;overscroll-behavior:contain;border-radius:var(--dsw-radius-sm,8px);corner-shape:var(--dsw-corner-shape)}
 .pe_result_item{display:flex;align-items:center;gap:8px;width:100%;font:inherit;font-size:11.5px;text-align:left;padding:5px 8px;border-radius:var(--dsw-radius-sm,8px);corner-shape:var(--dsw-corner-shape);border:1px solid transparent;background:color-mix(in srgb,var(--dsw-alias-bg-layer-1) 45%,transparent);color:var(--dsw-alias-label-secondary,var(--dsw-alias-label-tertiary));cursor:pointer;transition:background .14s ease,border-color .14s ease,color .14s ease}
 .pe_result_item:hover{border-color:color-mix(in srgb,var(--dsw-alias-border-l1) 85%,transparent);color:var(--dsw-alias-label-primary)}
 .pe_result_item.on{border-color:color-mix(in srgb,var(--dsw-alias-state-business-primary) 45%,transparent);background:color-mix(in srgb,var(--dsw-alias-state-business-primary) 12%,transparent);color:var(--dsw-alias-label-primary)}
@@ -705,7 +874,20 @@ window.__ModuleLoader__.load({
 .pe_diff_row:first-child{border-left-color:transparent}
 .pe_diff_seg.add{background:color-mix(in srgb,var(--dsw-alias-state-success-primary) 22%,transparent);color:var(--dsw-alias-label-primary);border-radius:2px;padding:0 1px}
 .pe_diff_seg.del{background:color-mix(in srgb,var(--dsw-alias-state-error-primary) 22%,transparent);color:var(--dsw-alias-label-primary);opacity:.72;text-decoration:line-through;text-decoration-thickness:1px;border-radius:2px;padding:0 1px}
-.pe_ft{flex:none;display:flex;align-items:center;flex-wrap:nowrap;gap:8px;padding:10px 26px 12px 12px}
+/* m23861：对比标题后面的「基准 N 字」。浅一档、不抢主标题，但必须看得见——
+   它的存在本身就是在回答「这是跟哪一版比」。 */
+.pe_diff_base{font-weight:500;color:var(--dsw-alias-label-tertiary);margin-left:2px}
+/* m23296：底栏原来是全透明的，只有按钮自己有底色。面板一旦调成半透明
+   （或 glass/clear 背景），底栏就会把**下面那行英文**透上来，和底栏上的按钮
+   文字、以及从底栏上方弹出来的菜单叠在一起 —— 用户原话「看不清了」。所以
+   底栏给一层不透明的底色，并且和面板自身底色是同一个色号，只在最底部与
+   面板的圆角保持一致。 */
+.pe_ft{flex:none;position:relative;z-index:1;display:flex;align-items:center;flex-wrap:nowrap;gap:8px;padding:10px 26px 12px 12px;background-color:var(--dsw-alias-bg-layer-2,#fff);border-top:1px solid color-mix(in srgb,var(--dsw-alias-border-l2) 40%,transparent);border-bottom-left-radius:calc(var(--dsw-radius-md,12px) - 1px);border-bottom-right-radius:calc(var(--dsw-radius-md,12px) - 1px)}
+/* 面板本身选了 glass / solid / clear 时，底栏跟着走同一套底色，避免出现
+   「上面的正文透、下面的底栏不透」的拼两条。 */
+.pe_bubble.bg_glass .pe_ft{background-color:color-mix(in srgb,var(--dsw-alias-bg-layer-2,#fff) var(--pe-panel-alpha),transparent);backdrop-filter:blur(16px) saturate(1.5);-webkit-backdrop-filter:blur(16px) saturate(1.5)}
+.pe_bubble.bg_doodle .pe_ft{background-color:color-mix(in srgb,var(--dsw-static-neutral-bluish-00,#fdf6e3) calc(var(--pe-panel-alpha) + 25%),transparent)}
+.pe_bubble.bg_minimal .pe_ft{background-color:color-mix(in srgb,var(--dsw-alias-bg-layer-1,#fff) var(--pe-panel-alpha),transparent)}
 .pe_ft_spacer{flex:1}
 .pe_ft .pe_note{margin-top:0}
 .pe_act{flex:none;white-space:nowrap;border:none;border-radius:var(--dsw-radius-sm,8px);corner-shape:var(--dsw-corner-shape);padding:6px 12px;font:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:background-color .12s ease,opacity .12s ease}
@@ -717,6 +899,57 @@ window.__ModuleLoader__.load({
 /* 中断按钮：生成中用红色文字标出来，和普通操作区分开。 */
 .pe_act.danger{color:var(--dsw-alias-state-error-primary)}
 .pe_act.danger:hover{background:color-mix(in srgb,var(--dsw-alias-state-error-primary) 15%,transparent)}
+/* 「重新生成」下拉（m22259）：左边主区域 + 右边 14px 的小三角，看起来是一个
+   按钮。两半都套 .pe_act.ghost 拿到同样的底色/字号，拼接处不留边框（用户
+   明确要求「不加边框分隔」），只把右半的左边圆角抹平。 */
+.pe_regen{position:relative;flex:none;display:inline-flex;align-items:stretch;border-radius:var(--dsw-radius-sm,8px)}
+.pe_regen_main{border-top-right-radius:0;border-bottom-right-radius:0;padding-right:6px}
+/* m23412：箭头那半的**右侧**必须跟着圆角。之前只把它的左边两个角抹平，
+   右边没写，于是「重新生成」整个控件右端是个直角——用户截图圈的就是这一块
+   （原话「这个位置不是圆角重新生成的右边」）。左侧仍然抹平，和主按钮拼成
+   一个胶囊；右侧给和主按钮同一档的 radius-sm。 */
+.pe_regen_caret{display:grid;place-items:center;width:16px;padding:0;border:none;border-top-left-radius:0;border-bottom-left-radius:0;border-top-right-radius:var(--dsw-radius-sm,8px);border-bottom-right-radius:var(--dsw-radius-sm,8px);cursor:pointer;font:inherit;background:color-mix(in srgb,var(--dsw-alias-label-primary) 9%,transparent);color:var(--dsw-alias-label-secondary,var(--dsw-alias-label-tertiary));transition:background-color .12s ease}
+.pe_regen_caret:hover:not(:disabled){background:color-mix(in srgb,var(--dsw-alias-label-primary) 15%,transparent);color:var(--dsw-alias-label-primary)}
+.pe_regen_caret:disabled{opacity:.5;cursor:default}
+/* 8px 实心三角，靠 border 画，随字号不缩放。 */
+.pe_regen_tri{display:block;width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid currentColor;transition:transform .12s ease}
+.pe_regen.on .pe_regen_tri{transform:rotate(180deg)}
+/* m23079 / m23296：菜单整体重做。
+   旧版是一个 4px 内边距的白方块、两行纯文字、0.18 的硬阴影，浮在对比区上方
+   像一块贴纸（用户原话「这个下拉框样式不好看」）。现在：
+   · 顶部一行小标题说明这是「重新生成的方式」，
+   · 两项各占一行，左边是选中标记、右边是名字 + 一句灰色解释，
+   · 圆角 10、细边框、柔和的双层阴影、12.5 字号。
+   m23296 改了两处观感问题：
+   · 菜单项原来用 align-items:flex-start，勾选框与标题基线错开半行 → 改成
+     勾选框自己居中、两行文字整体对齐。
+   m23401（用户原话「改为圆角然后有点看不清」）再修三处：
+   · **方向必须朝上**。面板根 .pe_bubble 带着 overflow:hidden（圆角要裁边），
+     往下弹的那一版整块被裁掉，等于菜单从来没出现过。现在回到 bottom:100%。
+   · 看不清的根因是层次不够：底色、边框、阴影都太淡，压在正文/「历史版本」
+     这一行上就和后面的字糊在一起。现在底色用面板同源的 bg-layer-1（实色）、
+     边框 92% 不透明、阴影加深一档，角标圆角 12 与面板一致。
+   · 选中项改成「淡蓝底 + 1px 蓝框 + 实心勾 + 加粗」，不再只靠一个空心方框
+     区分；文字仍用主字色（蓝字压淡蓝底只有 3.9，反而更难看清）。实测（暖白底
+     #fff）：主字色 18.9:1，解释行 5.8:1，旧版那一档灰只有 3.7:1。
+   m23425（用户原话「这个做的简单一些，就是下面这行的提示改为鼠标放置在
+   上面的时候显示」）：菜单里每项下面那行解释**不再占一行**，改成按钮的
+   原生 title——鼠标放上去才显示。菜单因此缩成「勾 + 名字」两行，最小宽度
+   从 256 收到 184。解释文字本身没删，只是换了出现方式。 */
+.pe_regen_menu{position:absolute;left:0;bottom:calc(100% + 8px);z-index:40;display:flex;flex-direction:column;min-width:184px;max-width:min(340px,72vw);max-height:min(300px,54vh);overflow:auto;overscroll-behavior:contain;padding:6px;border:1px solid color-mix(in srgb,var(--dsw-alias-border-l2) 92%,transparent);border-radius:var(--dsw-radius-md,12px);corner-shape:var(--dsw-corner-shape);background-color:var(--dsw-alias-bg-layer-1,#fff);box-shadow:0 2px 6px rgba(0,0,0,.08),0 16px 40px rgba(0,0,0,.18);animation:pe_menu_in .12s ease-out}
+@keyframes pe_menu_in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.pe_regen_title{padding:4px 8px 7px;font-size:11px;line-height:1.3;letter-spacing:.02em;color:var(--dsw-alias-label-secondary,var(--dsw-alias-label-tertiary))}
+.pe_regen_item{display:flex;align-items:center;gap:8px;padding:7px 10px;border:none;border-radius:8px;background:none;text-align:left;cursor:pointer;font:inherit;white-space:nowrap;transition:background-color .12s ease}
+.pe_regen_item:hover{background:color-mix(in srgb,var(--dsw-alias-label-primary) 8%,transparent)}
+.pe_regen_item:focus-visible{outline:2px solid color-mix(in srgb,var(--dsw-alias-state-business-primary) 60%,transparent);outline-offset:1px}
+/* 当前口径打勾：菜单里一眼看出现在用的是哪一项。 */
+.pe_regen_check{flex:none;display:grid;place-items:center;width:16px;height:16px;border-radius:5px;border:1px solid color-mix(in srgb,var(--dsw-alias-border-l1) 85%,transparent);background:transparent;font-size:10px;line-height:1;color:transparent}
+.pe_regen_item.on{background:color-mix(in srgb,var(--dsw-alias-state-business-primary) 12%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--dsw-alias-state-business-primary) 38%,transparent)}
+.pe_regen_item.on .pe_regen_check{color:#fff;border-color:transparent;background:var(--dsw-alias-state-business-primary)}
+.pe_regen_item.on .pe_regen_label{font-weight:600}
+.pe_regen_label{font-size:13px;line-height:1.25;font-weight:500;color:var(--dsw-alias-label-primary)}
+/* 主按钮上的短口径标签（「最初」/「上一版」）：不展开也能看出算的是哪一份。 */
+.pe_regen_tag{flex:none;margin-left:4px;padding:0 4px;border-radius:4px;font-size:10px;line-height:1.5;font-weight:500;color:var(--dsw-alias-label-tertiary);background:color-mix(in srgb,var(--dsw-alias-label-primary) 8%,transparent)}
 
 /* ── settings page ── */
 .pe_root{display:flex;flex-direction:column;gap:16px;max-width:760px;font-size:13px;line-height:1.55;color:var(--dsw-alias-label-primary);-webkit-font-smoothing:antialiased}
@@ -808,7 +1041,20 @@ window.__ModuleLoader__.load({
    内边距一改就偏 —— 这正是对齐反复失效的根源。现在 CH/EN 直接贴本页内容区
    的右边缘（.pe_head 与 .pe_content 共用同一套 24px 内边距），与上面那行
    按钮共用同一条右基准线，不需要任何实测。 */
-.pe_head_actions{display:flex;align-items:center;gap:8px;flex:none;margin-left:auto}
+/* m24215/m24219/m24220（用户：「不要单独一行就是在标题的那一行，不要靠右就是要正下方
+   中心线对中心线的那种」，以及「你直接移动这个 CH/EN 长度的一半距离不就好了，
+   CH/EN 这个组件的长度你总算的出来吧」）：CH/EN 留在标题行末尾，左移**半个自身
+   宽度**，让它的中心线落到内容区右边缘的那条线上（宿主「打开配置文件」按钮的
+   中心也在那条线附近）。
+   为什么不用跨元素实测：那条路要量宿主「打开配置文件」按钮的屏幕坐标，而它跟
+   本页不在同一套坐标系里（m01980 / m02044 两次都没对）。CH/EN 自身的宽度是 CSS
+   能直接算出来的确定值 —— 用 transform 的 translateX 百分比即可，它按**自身宽度**
+   解析，纯几何、零依赖，缩放和宿主改版都不会让它漂。
+   方向：m24219 一版写成 +50%（右移），CH/EN 整个被推出面板右边缘裁掉，用户
+   m02103「移动反了吧」。改成 -50%（左移）后右半截留在面板内、中心线落到基准线上。
+   注意别用 margin 百分比：那是按包含块宽度解析的，m01941 就是这样把 CH/EN 推出
+   屏幕、直接消失了一版。 */
+.pe_head_actions{display:flex;align-items:center;gap:8px;flex:none;margin-left:auto;transform:translateX(-50%)}
 /* m20618：图标动画调慢 —— 四根线每根间隔 220ms 依次落下，整轮 5 秒。
    之前 3 秒/90ms 是用户说"太慢"后我调快的，现在又说太快，回到接近初版的节奏。 */
 .pe_head_icon .pc_ln{animation:pc_ln_in 300ms ease-out both}
@@ -966,7 +1212,6 @@ window.__ModuleLoader__.load({
    composer 上方）：居中摆放会正好盖住 composer 上的触发按钮，用户就看不到
    自己刚换的图标了（m05706 要求「改图标的时候能看得到图标的变化」）。 */
 .pe_prev_scale .pe_bubble{width:460px;max-width:100%;height:148px}
-.pe_prev_none{position:absolute;left:0;right:0;top:52%;transform:translateY(-50%);text-align:center;padding:0 24px;font-size:11.5px;line-height:1.6;color:var(--dsw-alias-label-tertiary)}
 .pe_prev .pe_msg{font-size:9.5px;line-height:1.5}
 .pe_prev .pe_edit{font-size:9.5px;min-height:0;flex:1 1 auto;padding:6px 7px;border-radius:var(--dsw-radius-xs,4px)}
 .pe_prev .pe_hd{padding:5px 5px 5px 8px;cursor:default}
@@ -983,6 +1228,14 @@ window.__ModuleLoader__.load({
 .pe_prev .pe_diff_sign{width:6px;font-size:7.5px}
 .pe_prev .pe_ft{padding:5px 7px 6px;gap:4px}
 .pe_prev .pe_act{font-size:8px;padding:2px 6px;border-radius:var(--dsw-radius-xs,4px)}
+/* 预览里的下拉同样缩一档：460px 宽的面板塞不下 230px 的正常菜单。 */
+.pe_prev .pe_regen_caret{width:10px;border-top-right-radius:var(--dsw-radius-xs,4px);border-bottom-right-radius:var(--dsw-radius-xs,4px)}
+.pe_prev .pe_regen_menu{min-width:0;max-width:none;max-height:none;padding:3px;border-radius:6px;bottom:calc(100% + 3px)}
+.pe_prev .pe_regen_title{padding:2px 4px 3px;font-size:7px}
+.pe_prev .pe_regen_item{gap:3px;padding:2px 4px 2px 2px;border-radius:4px;white-space:normal}
+.pe_prev .pe_regen_label{font-size:7.5px}
+.pe_prev .pe_regen_check{width:8px;height:8px;border-radius:2px;font-size:5px}
+.pe_prev .pe_regen_tag{font-size:6.5px;margin-left:2px;padding:0 2px}
 .pe_prev .pe_diff_modes{display:none}
 .pe_prev .pe_diff_hint{display:none}
 `
@@ -991,7 +1244,15 @@ window.__ModuleLoader__.load({
     function api(path, options) {
       const url = '/api/prompt-chain' + path
       const init = Object.assign({ headers: { 'content-type': 'application/json' } }, options || {})
+      // onHeaders 是本插件自己的阶段钩子，留在 init 上不影响真实 fetch
+      // （RequestInit 是字典，未定义的成员会被忽略），这样测试床也能观察到它。
       return fetch(url, init).then((res) => {
+        // m07254：阶段气泡靠「响应头到达」区分 连接中（已发出，头未到）与
+        // 调用中（头到了，正文还没到）。有这个钩子就即时推进阶段，否则只有
+        // 一次性 JSON，前端只能推到「已发出」为止。
+        if (typeof init.onHeaders === 'function') {
+          try { init.onHeaders(res) } catch { /* 阶段推进失败不影响请求 */ }
+        }
         return res.json().catch(() => null).then((data) => {
           if (!res.ok) {
             // 404 不是「接口报错」而是「这个路由根本不存在」：插件宿主那一半没
@@ -1156,16 +1417,36 @@ window.__ModuleLoader__.load({
         if (!panel || !page) return null
         const target = findOpenDocumentButton(panel)
         if (!target) return null
-        // 两个元素可能隔着几层，用 getBoundingClientRect 直接比屏幕坐标最稳。
-        // 注意：这个距离是相对**面板右边缘**的，而 CH/EN 位于本页内容区里、
-        // 内容区右边缘离面板右边缘还有 padding(24px)。CSS 里用的是
-        // margin-right: calc(var(--pc-actions-right) - 24px) 来抵消这 24px，
-        // 所以这里给的是"面板右边缘到按钮左边缘"的绝对值，不做减法。
-        const pr = panel.getBoundingClientRect()
+        // m24215/m24217（用户：「不要靠右，就是要正下方中心线对中心线的那种」）：
+        // 要的是**中心线对齐**。这里直接算出需要的 margin-right（像素）。
+        //
+        // 布局事实：.pe_head_actions 有 margin-left:auto，所以它贴在行尾，
+        // 其右边缘 = 内容区右边缘 - margin-right；中心 = 右边缘 - 自身宽/2。
+        // 记 B = 按钮中心距内容区右边缘的距离，W = CH/EN 自身宽度。令
+        //     右边缘 - W/2 == 按钮中心
+        //   ⇒ marginRight = B - W/2
+        //
+        // 注意：margin 里的百分比是按**包含块宽度**解析的，不是按自身宽度 ——
+        // 上一版写 `calc(var - 100%)` 想表达"半个身位"，实际把元素推走了整整
+        // 一个容器宽，CH/EN 直接不见了（用户 m01941「直接消失不见了」）。所以
+        // 这里改成量出 W 后用具体像素值，绝不依赖百分比。
         const br = target.getBoundingClientRect()
-        const inset = pr.right - br.left
-        if (!(inset > 0) || inset > pr.width / 2) return null
-        return Math.round(inset)
+        if (!(br.width > 0)) return null
+        const langEl = page.querySelector('.pe_lang')
+        const lr = langEl ? langEl.getBoundingClientRect() : null
+        // 还没量到自身宽度时（首次渲染），先按 0 处理 —— 只右对齐，不推中心。
+        const langW = lr && lr.width > 0 ? lr.width : 0
+        const pageRect = page.getBoundingClientRect()
+        const contentRight = pageRect.right
+        const btnCenterX = br.left + br.width / 2
+        // B：按钮中心到内容区右边缘的距离。
+        const B = contentRight - btnCenterX
+        const margin = Math.round(B - langW / 2)
+        if (!isFinite(margin)) return null
+        // 夹在合理范围：按钮一定在内容区里，偏太多说明量到了别的东西。
+        const limit = Math.max(240, pageRect.width / 2)
+        if (Math.abs(margin) > limit) return null
+        return margin
       } catch (e) {
         return null
       }
@@ -1174,13 +1455,33 @@ window.__ModuleLoader__.load({
     function installActionsInset(getText) {
       if (typeof document === 'undefined') return () => {}
       let raf = 0
+      let observed = null
       const apply = () => {
         raf = 0
         const page = document.querySelector('[data-pc-page]')
         if (!page) return
+        // m24217：面板/按钮可能比本页晚挂载。原来只在 install 那一刻 observe 一次
+        // panel，若那时它还不存在，就再没有任何重算机会 —— 变量永远不写，CH/EN
+        // 一直贴右（正是用户 m01980「位置还是没对」的现象）。现在每次 apply 都
+        // 检查一次，晚到的面板也能被补上观察。
+        const ro = (typeof ResizeObserver === 'function') ? resizeObs : null
+        if (ro) {
+          const panelNow = document.querySelector(SETTINGS_PANEL_SELECTOR)
+          if (panelNow && panelNow !== observed) {
+            if (observed) { try { ro.unobserve(observed) } catch { /* 忽略 */ } }
+            observed = panelNow
+            try { ro.observe(panelNow) } catch { /* 忽略 */ }
+          }
+        }
         const px = measureActionsInset()
         if (px == null) page.style.removeProperty(ACTIONS_VAR)
         else page.style.setProperty(ACTIONS_VAR, px + 'px')
+        // 量不到尺寸时（首次渲染 .pe_lang 还没有 width），再来一拍校正，
+        // 让中心线对齐不必等到用户缩放窗口才生效。
+        if (px == null && tries < 30) {
+          tries++
+          schedule()
+        }
         // m20674：把实测数字报给宿主日志（host-diag.ndjson），对齐问题只看数字、
         // 不靠肉眼猜。只在数值变化时上报，避免每次 resize 都刷日志。
         try {
@@ -1192,21 +1493,24 @@ window.__ModuleLoader__.load({
           }
         } catch { /* 诊断永远不能影响渲染 */ }
       }
+      let tries = 0
       const schedule = () => {
         if (raf) return
         raf = (typeof requestAnimationFrame === 'function')
           ? requestAnimationFrame(apply)
           : setTimeout(apply, 16)
       }
+      const resizeObs = (typeof ResizeObserver === 'function') ? new ResizeObserver(schedule) : null
       apply()
       // 面板可能晚一拍才渲染出来 / 用户改了缩放 / 切了分页，都要重算。
-      const ro = (typeof ResizeObserver === 'function') ? new ResizeObserver(schedule) : null
-      const panel = document.querySelector(SETTINGS_PANEL_SELECTOR)
-      if (ro && panel) ro.observe(panel)
+      if (resizeObs) {
+        const panel = document.querySelector(SETTINGS_PANEL_SELECTOR)
+        if (panel) { observed = panel; try { resizeObs.observe(panel) } catch { /* 忽略 */ } }
+      }
       window.addEventListener('resize', schedule)
       return () => {
         if (raf && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(raf)
-        if (ro) ro.disconnect()
+        if (resizeObs) resizeObs.disconnect()
         window.removeEventListener('resize', schedule)
       }
     }
@@ -1616,6 +1920,45 @@ window.__ModuleLoader__.load({
       return out
     }
 
+    // m24285：模型敷衍改写的判定（用户 m04813「他一直转圈没有东西生成」、
+    // m04863 附别人家产品对「你好」返回一段完整任务说明的截图）。
+    // 模型极少逐字原样返回，多半给「您好」「你好。」这种只差一个字的敷衍
+    // 改写——字面不等，走的是成功分支写回输入框；用户肉眼看到的输入框
+    // 还是「你好」，以为没反应一直在转圈。
+    // 判定顺序（v2，_check_meaningful.mjs 实测定稿）：
+    //   1) 去掉全部空白+标点后相同 → 无意义（「你好」→「你好。」）
+    //   2) 结果被清空 → 无意义（别把草稿抹掉）
+    //   3) 实义字符净增减 ≥4 → 有意义（真扩写/真压缩）
+    //   4) 超长文本（>300 实义字）到此为止，去标点后不同就算有意义
+    //   5) 长度接近时看共有内容（LCS）占比 ≥0.5 → 敷衍（「你好」→「您好」
+    //      重合 0.5；「帮我些个排序」→「帮我写个排序」改错字重合 0.83 也会
+    //      被归为敷衍——宁可少写回一次，也不再让用户对着「看起来没变」的
+    //      输入框以为在转圈，这是用户 m04865 点名的防呆方向）。
+    function isMeaningfulChange(original, next) {
+      if (typeof next !== 'string') return false
+      const bare = (s) => String(s).replace(/[\s\p{P}\p{S}]/gu, '')
+      const a = bare(original)
+      const b = bare(next)
+      if (a === b) return false
+      if (b === '') return false
+      if (Math.abs(b.length - a.length) >= 4) return true
+      if (a.length > 300 || b.length > 300) return true
+      return lcsLen(a, b) / Math.max(a.length, b.length) < 0.5
+    }
+
+    // 最长公共子序列长度（滚动数组，O(n*m)）。只在两段都 ≤300 字时调用。
+    function lcsLen(a, b) {
+      let prev = new Array(b.length + 1).fill(0)
+      for (let i = 1; i <= a.length; i += 1) {
+        const cur = [0]
+        for (let j = 1; j <= b.length; j += 1) {
+          cur[j] = a[i - 1] === b[j - 1] ? prev[j - 1] + 1 : Math.max(prev[j], cur[j - 1])
+        }
+        prev = cur
+      }
+      return prev[b.length]
+    }
+
     // ── 增强前后对比（行级） ───────────────────────────────────────────────
     // 只保留「行级」对比：进入面板时的原文与当前文本逐行比对，删掉的行标红、
     // 新增的行标绿。用户 m04492 明确要求「取消分句 / 逐词对比」——那两档
@@ -1810,6 +2153,11 @@ window.__ModuleLoader__.load({
     // 单次生成最长等待：到点自动中止，面板留在可重试的状态，而不是让用户
     // 对着转圈无限等下去。
     const TIMEOUT_MS = 120000
+    // m07254 生成过程气泡：每 10 秒在图标上方弹一次过程态短词，显示 4 秒后
+    // 淡出，再等下一个 10 秒，如此循环直到成功或报错终止。正常 1.5 秒就完成的
+    // 快请求全程不会出现气泡，绝对不会打扰。
+    const BUBBLE_CHECK_MS = 10000
+    const BUBBLE_SHOW_MS = 4000
 
     // ── enhance button (composer slot) ──────────────────────────────────────
     function EnhanceButton(props) {
@@ -1831,7 +2179,7 @@ window.__ModuleLoader__.load({
       const settingsTriggerEmoji = props.settingsTriggerEmoji != null ? props.settingsTriggerEmoji : (liveSettings?.triggerEmoji || '')
       const settingsTriggerIcon = props.settingsTriggerIcon != null ? props.settingsTriggerIcon : (liveSettings?.triggerIcon || '')
       const settingsTriggerValue = settingsTriggerEmoji || settingsTriggerIcon
-      const settingsPanelBg = props.settingsPanelBg || liveSettings?.panelBg || 'clear'
+      const settingsPanelBg = props.settingsPanelBg || liveSettings?.panelBg || 'minimal'
       const settingsPanelOpacity = props.settingsPanelOpacity != null ? props.settingsPanelOpacity : (liveSettings?.panelOpacity ?? 100)
       // 快捷键开关：默认开。关掉的理由通常是和别的东西撞键。
       const settingsHotkey = props.settingsHotkey != null ? props.settingsHotkey : (liveSettings?.hotkey ?? true)
@@ -1959,20 +2307,81 @@ window.__ModuleLoader__.load({
       // （既不是起点、也不是上一版结果）才清空重开。
       const originRef = React.useRef('')
       const lastResultRef = React.useRef('')
+      // m23425：上一轮**递出去**的提示词（注意不是结果）。「基于上一次内容」这
+      // 一档要的是它——用户原话：「当前面板显示的是刚刚生成出来的，然后不满意，
+      // 所以才要用上一次的提示词重新生成一次」。拿刚生成的那版当输入只是把它
+      // 再改一遍，那不是「重新生成」。
+      // 和 lastResultRef 的分工：后者是上一轮的**输出**，递给宿主系统提示词防
+      // 重复；前者是上一轮的**输入**，给「上一次」这一档当重算基准。
+      // 只在每轮成功时写一次，撤销/重做/跳版本都不碰它，所以面板里的手工编辑
+      // （编辑不进撤销栈）也污染不到它。
+      const lastInputRef = React.useRef('')
+      // m24230：最近一轮**递出去的是哪一档**（'rewrite' | 'rewriteFrom' |
+      // 'continue'）。面板的对比标题要把这个说清楚——用户 m02177 截图里明明选的是
+      // 「基于上一次内容」，标题却只写「基准 N 字」，他只能靠数字去猜这一版到底
+      // 跟谁比。数字一碰巧对上（最初版本和上一版字数相同时完全一样）就看着像
+      // 功能错了。有了这一档，标题直接写「基准：基于上一次内容 · N 字」。
+      const lastInputFromRef = React.useRef('')
+      // 链的最初草稿（m22250 问题4）：整个链里只写一次，之后永不改。
+      // 之所以不复用 originRef —— originRef 会被每一轮 rewrite 覆写成「本轮
+      // 起点」，而「基于最初版本重新生成」要的是**链头**那份原文，两者在
+      // 第二轮之后就分叉了。
+      const baseDraftRef = React.useRef('')
       // 结果历史栈（功能 3）：每一轮真正拿到的成果单独留一份。和 historyRef
       // 的分工：historyRef 记「这一轮的输入文本」，用于一步步撤销；这里记
       // 「这一轮的输出文本」，用于直接跳回任意一版。ref 不触发重渲染，
       // 所以另配一个 state 深度计数给 UI 用。
       const resultsRef = React.useRef([])
       const [resultsDepth, setResultsDepth] = React.useState(0)
-      const pushResult = React.useCallback((entry) => {
-        if (!entry || typeof entry.text !== 'string' || entry.text === '') return
+      // 模型没听话、生成了和某一版完全相同的内容（m22250 问题1）：不新开一条，
+      // 而是给一句提示，并把面板切到那一版（和点历史条目同一条路径）。
+      const [dupNotice, setDupNotice] = React.useState(false)
+      // m24240：某段文本是「历史版本」里的第几条（1 起，就是列表上那个序号）。
+      // 用户要基准带编号，编号得从**同一份栈**里反查，不能另起一套计数——否则
+      // 标题里的第 7 版和列表里的第 7 条对不上。
+      //
+      // 只认**完全相等**的文本：递出去的原文和某一版结果一字不差时才说得出编号
+      // （最常见的两种就是「基于最初版本」→ 第 1 版、「基于上一次内容」→ 上一
+      // 版）。面板里手工改过字再重新生成时原文谁也不等，那就没有编号可写，宁可
+      // 不写，也不猜一个错的。`before` 是只搜前多少个下标：入栈前调用时用它排
+      // 掉「即将压进来的这一条」自己。
+      const indexOfResultText = React.useCallback((value, before) => {
+        if (typeof value !== 'string' || value === '') return -1
         const stack = resultsRef.current
-        if (stack[stack.length - 1] && stack[stack.length - 1].text === entry.text) return
+        const limit = typeof before === 'number' && before >= 0 ? Math.min(before, stack.length) : stack.length
+        for (let i = 0; i < limit; i += 1) {
+          if (stack[i] && stack[i].text === value) return i + 1
+        }
+        return -1
+      }, [])
+      const pushResult = React.useCallback((entry) => {
+        if (!entry || typeof entry.text !== 'string' || entry.text === '') return false
+        const stack = resultsRef.current
+        // 整条栈去重（以前只看栈顶）。模型被要求不要重复，但真重复了也不能
+        // 悄悄多出一条一模一样的版本——那会让「历史版本」看起来像卡住。
+        for (let i = 0; i < stack.length; i += 1) {
+          if (stack[i] && stack[i].text === entry.text) {
+            setDupNotice(true)
+            return false
+          }
+        }
         stack.push(entry)
-        // 只留最近 12 版：再多就该用「保存成预设」而不是往回翻了。
-        if (stack.length > 12) stack.shift()
+        // 上限 13：12 条结果 + 第 0 条最初草稿。永远只丢最老的那条**结果**，
+        // 草稿钉在第 0 位不会被挤掉（m22250：历史第一条始终记录最初的提示词）。
+        if (stack.length > 13) stack.splice(1, 1)
         setResultsDepth(stack.length)
+        setDupNotice(false)
+        return true
+      }, [])
+      // 把最初草稿写成历史第一条（mode: 'draft'）。只有链重开时才重建，
+      // 之后这条永远在索引 0，不参与去重淘汰。
+      // m23861：base 一并记成空串——链头草稿没有「上一版」可对比，跳回去时
+      // 走「和当前面板比」的老口径（那就是它自己的原文，差异必然为空）。
+      const seedDraftResult = React.useCallback((text) => {
+        if (typeof text !== 'string' || text.trim() === '') return
+        resultsRef.current = [{ text, mode: 'draft', at: Date.now(), base: '', baseFrom: '' }]
+        setResultsDepth(1)
+        setDupNotice(false)
       }, [])
       // 本轮「继续生成」了几次，以及这一轮是不是被超时掐掉的。
       const continuesRef = React.useRef(0)
@@ -2002,6 +2411,62 @@ window.__ModuleLoader__.load({
         const id = setInterval(() => { setElapsed(Math.round((Date.now() - started) / 1000)) }, 1000)
         return () => clearInterval(id)
       }, [busy])
+
+      // ── m07254 生成过程气泡 ────────────────────────────────────────────────
+      // 四个阶段按序号只进不退（preparing→connecting→calling→streaming）。
+      // 气泡本身只是「过程态短词指示器」，永远不显示错误——错误统一走旧 toast。
+      const PHASE_ORDER = Object.freeze(['preparing', 'connecting', 'calling', 'streaming'])
+      const phaseIdxRef = React.useRef(0)
+      const [bubblePhase, setBubblePhase] = React.useState(0)
+      const [bubbleOn, setBubbleOn] = React.useState(false)
+      // 只进不退：传入目标序号，比当前大才推进（同时同步一份 state 给渲染用）。
+      const phaseAdvance = React.useCallback((atLeast) => {
+        const need = typeof atLeast === 'number' ? atLeast : 0
+        if (need > phaseIdxRef.current) {
+          phaseIdxRef.current = need
+          setBubblePhase(need)
+        }
+      }, [])
+      const bubbleTimerRef = React.useRef(null)
+      // 气泡是 position:fixed，位置得自己算：锚点就是触发按钮本身（wrapRef）。
+      // 用 getBoundingClientRect 取按钮上沿，气泡底边落在按钮上方 6px 处，水平
+      // 居中于按钮。宿主输入区的包裹层带 overflow:hidden 也裁不到 fixed 元素。
+      const bubblePosRef = React.useRef({ left: 0, top: 0 })
+      const [bubblePos, setBubblePos] = React.useState({ left: 0, top: 0 })
+      const placeBubble = React.useCallback(() => {
+        const el = wrapRef.current
+        if (!el || typeof el.getBoundingClientRect !== 'function') return
+        const box = el.getBoundingClientRect()
+        if (!box || !box.width) return
+        const next = { left: Math.round(box.left + box.width / 2), top: Math.round(box.top - 6) }
+        const prev = bubblePosRef.current
+        if (prev.left === next.left && prev.top === next.top) return
+        bubblePosRef.current = next
+        setBubblePos(next)
+      }, [])
+      React.useEffect(() => {
+        // 非 busy（成功/报错/取消都已落地）→ 清循环与残留气泡。
+        if (!busy) {
+          if (bubbleTimerRef.current) { clearTimeout(bubbleTimerRef.current); bubbleTimerRef.current = null }
+          phaseIdxRef.current = 0
+          setBubblePhase(0)
+          setBubbleOn(false)
+          return undefined
+        }
+        // busy 开始：每 BUBBLE_CHECK_MS 弹一次当前阶段气泡，显示 BUBBLE_SHOW_MS 淡出。
+        // 快请求（1.5s）在整个 busy 内一次都弹不出来，天然安静。
+        const loop = setInterval(() => {
+          placeBubble()
+          setBubbleOn(true)
+          if (bubbleTimerRef.current) clearTimeout(bubbleTimerRef.current)
+          bubbleTimerRef.current = setTimeout(() => setBubbleOn(false), BUBBLE_SHOW_MS)
+        }, BUBBLE_CHECK_MS)
+        return () => {
+          clearInterval(loop)
+          if (bubbleTimerRef.current) { clearTimeout(bubbleTimerRef.current); bubbleTimerRef.current = null }
+          setBubbleOn(false)
+        }
+      }, [busy, placeBubble])
 
       const pushHistory = React.useCallback((text) => {
         if (typeof text !== 'string' || text === '') return
@@ -2050,6 +2515,11 @@ window.__ModuleLoader__.load({
           baseRef.current = ''
           originRef.current = ''
           lastResultRef.current = ''
+          // 链头草稿也清：输入框空了就是下一段提示词（m22250 问题2）。
+          baseDraftRef.current = ''
+          // 上一轮的输入同理：新的一段从零开始。
+          lastInputRef.current = ''
+          setDupNotice(false)
           // 最近一次尝试也清：新的一段从零开始（m17616 的中断/重试判断要用）。
           attemptRef.current = ''
         }
@@ -2108,7 +2578,12 @@ window.__ModuleLoader__.load({
             // m15602：撤销后不再把对比清成 null——用户最常做的「撤销→再回退」
             // 恰好是看不到差异的时候。这里改成记「这次撤销把哪版换成了哪版」，
             // 对比面板因此始终有话可说。
-            ? Object.assign({}, current, { text: back, message: t('undone'), diff: diffLines(current.text, back) }, failed ? { draftFailed: true } : null)
+            // m23861：diffBase 一并写在前面。它不是「被换成的那一版」，而是
+            // 这次换版的出发文本——不写这个字段，diffBase 会停在上一轮生成时的
+            // 值，于是 diff 说一套、baseline 说另一套。
+            // m24230：基准来源在撤销后无从考证（撤回去的是「上一版」，不是任何一
+            // 个生成口径的输入），所以清成空串，标题只留字数。
+            ? Object.assign({}, current, { text: back, message: t('undone'), diffBase: current.text, diffBaseFrom: '', diff: diffLines(current.text, back) }, failed ? { draftFailed: true } : null)
             : current))
           return        }
         // 栈空了：退回**这一段的起点** baseRef。
@@ -2133,6 +2608,9 @@ window.__ModuleLoader__.load({
           return Object.assign({}, current, {
             text: origin,
             message: t('undone'),
+            // m23861：退到起点＝和起点自己比，差异归零，基准也随之归零。
+            diffBase: '',
+            diffBaseFrom: '',
             diff: null,
           }, failed ? { draftFailed: true } : null)
         })
@@ -2148,7 +2626,7 @@ window.__ModuleLoader__.load({
         let failed = false
         try { inputActions.setDraft(next) } catch { failed = true }
         setBubble((current) => (current && typeof current.text === 'string'
-          ? Object.assign({}, current, { text: next, message: t('redone'), diff: diffLines(current.text, next) }, failed ? { draftFailed: true } : null)
+          ? Object.assign({}, current, { text: next, message: t('redone'), diffBase: current.text, diffBaseFrom: '', diff: diffLines(current.text, next) }, failed ? { draftFailed: true } : null)
           : current))
       }, [bubble, inputActions, pushHistory, t])
 
@@ -2159,7 +2637,10 @@ window.__ModuleLoader__.load({
         const entry = stack[index]
         if (!entry) return
         if (bubble && typeof bubble.text === 'string') pushRedo(bubble.text)
-        if (bubble && bubble.original != null) pushHistory(bubble.original)
+        // m22250 问题2：照浏览器历史的规则——点第 1 条（链头草稿）不进撤销栈，
+        // 只把草稿写回输入框。它本来就是起点，再记一条只是让撤销栈多一步空转。
+        const isDraft = entry.mode === 'draft'
+        if (!isDraft && bubble && bubble.original != null) pushHistory(bubble.original)
         let failed = false
         try { inputActions.setDraft(entry.text) } catch { failed = true }
         setBubble((current) => (current && typeof current.text === 'string'
@@ -2168,8 +2649,20 @@ window.__ModuleLoader__.load({
               original: current.original != null ? current.original : entry.text,
               message: t('jumped'),
               // m15602：跳版本同样保留对比（记「从刚才那版换成了这一版」）。
-              diff: diffLines(current.text, entry.text),
-              continues: entry.mode === 'continue' ? (current.continues || 0) : 0,
+              // m23861：基准改成**这一版自己的**输入（entry.base），不再是
+              // 「刚才面板上是什么」——后者会让同一版的对比随浏览顺序变化，
+              // 正是用户说的「对比的内容中途变来变去」。没有 base 的旧条目
+              // （链头草稿 / 迁移前的老栈）退回当前面板，行为同以前。
+              diffBase: typeof entry.base === 'string' ? entry.base : '',
+              // m24230：每一版自带来源，跳过去时标题照它的来源写。
+              diffBaseFrom: typeof entry.baseFrom === 'string' ? entry.baseFrom : '',
+              // m24240：连同「基准是链里第几版」一起带过去，标题里写编号。
+              diffBaseIndex: typeof entry.baseIndex === 'number' ? entry.baseIndex : -1,
+              diff: diffLines(typeof entry.base === 'string' && entry.base !== '' ? entry.base : current.text, entry.text),
+              // 跳回链头草稿等于回到起点：续写计数归零；跳回某个续写版则保留。
+              // m05131：跳回「编辑」版也保留——它就在续写链上（edit 之后往往
+              // 跟着一轮续写），归零会让下一次「继续生成」白拿一次额度。
+              continues: (entry.mode === 'continue' || entry.mode === 'edit' || isDraft) ? (current.continues || 0) : 0,
             }, failed ? { draftFailed: true } : null)
           : current))
       }, [bubble, inputActions, pushRedo, pushHistory, t])
@@ -2218,24 +2711,39 @@ window.__ModuleLoader__.load({
         //
         // 注意这里的 attemptRef 判断只在「本轮还没改 originRef 之前」读——下面
         // 会把 originRef 指向本轮 text，那样本轮就和起点恒等，什么判断都看不出来了。
-        if (mode !== 'continue' && originRef.current !== '' && originRef.current !== text && lastResultRef.current !== text
+        // m22259：只有「换了一段新草稿」才重开历史，所以判据从 mode !== 'continue'
+        // 收紧成 mode === 'rewrite'。rewriteFrom（基于上一次重新生成）和 continue
+        // 都跑在同一条链上，不该清历史。baseDraftRef 为空说明这是链的第一轮，
+        // 把它记成链头（只写一次，之后永不改）。
+        if (mode === 'rewrite' && originRef.current !== '' && originRef.current !== text && lastResultRef.current !== text
           && attemptRef.current !== text) {
           resultsRef.current = []
           setResultsDepth(0)
           historyRef.current = []
           baseRef.current = ''
+          baseDraftRef.current = ''
+          // 换了提示词，上一轮的输入也就不算了：先清掉，等这一轮成功再写新的。
+          lastInputRef.current = ''
           clearRedo()
           chainReset = true
         }
-        if (mode !== 'continue') originRef.current = text
+        if (mode === 'rewrite') originRef.current = text
+        if (mode === 'rewrite' && baseDraftRef.current === '') baseDraftRef.current = text
         // m15816：面板上的「原稿」（重新生成的基准）必须永远是**本轮锚点**。
         // continue 不改锚点，可它原来会把 original 写成自己的起点（上一版结果），
         // 于是「✨ → 继续生成 → 重新生成」时重新生成递上来的 text 既不等于
         // originRef 也不等于 lastResult，正好撞上上面的重开判断，把「历史版本」
         // 和撤销栈一起清空——用户报的就是「历史被清空了」。
-        const anchor = mode === 'continue' ? (originRef.current || text) : text
+        const anchor = mode === 'continue' ? (originRef.current || text) : (baseDraftRef.current || text)
         attemptRef.current = anchor
+        // 历史第一条永远是链头草稿（m22250）：链刚开（或刚重开）时把它种进去。
+        // 之后这条钉在索引 0，pushResult 只会丢结果、不会动它。
+        if (mode === 'rewrite' && (resultsRef.current.length === 0 || chainReset)) {
+          seedDraftResult(baseDraftRef.current)
+        }
         setBusy(true)
+        // m07254 阶段 0：准备中——请求体还在拼、fetch 还没发出去。
+        phaseAdvance(0)
         // AbortController：中断键按下去时这次 fetch 立刻作废。用户原话
         // "继续生成和重新生成为什么不能打断" —— 之前只有 busy 一个闸，
         // 且所有按钮都 disabled，等于把用户锁在等待里。
@@ -2248,43 +2756,128 @@ window.__ModuleLoader__.load({
           timedOutRef.current = true
           if (ac) { try { ac.abort() } catch { /* already settled */ } }
         }, TIMEOUT_MS)
+        // m07254 阶段 1：连接中——请求已发出，响应头还没回来。
+        phaseAdvance(1)
         api('/enhance', {
           method: 'POST',
-          body: JSON.stringify({ text, sessionId, mode, ...(getCurrentModel ? getCurrentModel(sessionId) : {}) }),
+          body: JSON.stringify({
+            text,
+            sessionId,
+            mode,
+            // m22250 问题1：把上一版结果一起递给模型，让宿主在系统提示里补一句
+            // 「不要和它重复」。老宿主不认这个字段，忽略即向后兼容。
+            lastResult: lastResultRef.current || '',
+            ...(getCurrentModel ? getCurrentModel(sessionId) : {}),
+          }),
           signal: ac ? ac.signal : undefined,
+          // m07254 阶段 2：调用中——响应头到了，模型还在算，正文没回来。
+          onHeaders: () => phaseAdvance(2),
         })
           .then((result) => {
-            if (result && typeof result.text === 'string' && result.text !== text) {
+            // m07254 阶段 3：生成中——正文到了，正在写回面板。
+            phaseAdvance(3)
+            // m24285：判定改成「有意义变化」。模型给「您好」「你好。」这种只差
+            // 一个字的敷衍改写时，不再写回输入框（用户肉眼看到的还是原样，
+            // 以为转圈没反应），而是走 nochange 分支，明说「无需改动」。
+            if (result && typeof result.text === 'string' && isMeaningfulChange(text, result.text)) {
               let draftFailed = false
               try { inputActions.setDraft(result.text) } catch { draftFailed = true }
               // 进撤销栈的是这一轮的输入文本（continue 时是上一段结果，
               // regenerate 时是原文），所以撤销就是一步步退回上一轮。
               pushHistory(text)
+              // m05131：继续生成前用户在面板里手工改过字（本轮递出去的 text 与
+              // lastResultRef 里的上一版结果不同）→ 把改字版自己先当一版存进
+              // 历史栈，用户原话「把修改过后的当作一版丢进历史记录」。这样续写
+              // 结果进来后，历史里同时有「编辑版」和「续写版」，随时能退回改字
+              // 那一手。pushHistory 只管撤销、不进历史版本列表（edit 回调的
+              // 注释写明原因），所以这里必须单独记一条 results 条目。
+              // base/baseFrom/baseIndex：编辑版的「上一手」就是上一版结果，对比
+              // 与跳版本口径与其它条目一致；mode: 'edit' 在列表里显示「编辑」。
+              if (mode === 'continue' && text !== lastResultRef.current) {
+                const editBaseIndex = indexOfResultText(lastResultRef.current)
+                pushResult({
+                  text,
+                  mode: 'edit',
+                  at: Date.now(),
+                  base: typeof lastResultRef.current === 'string' ? lastResultRef.current : '',
+                  baseFrom: 'continue',
+                  baseIndex: editBaseIndex,
+                })
+              }
               // 结果历史栈：每一轮真正拿到的成果单独留一份，让用户可以直接
-              // 跳回任意一版，不用一路按撤销。栈里存 {text, mode, at}。
+              // 跳回任意一版，不用一路按撤销。栈里存 {text, mode, at, base}。
               // 只记「结果」，不记中间输入文本（那是 historyRef 的事）。
-              pushResult({ text: result.text, mode, at: Date.now() })
+              // m22250：rewriteFrom 在历史里统一记成 rewrite（都是「重写」）。
+              // m23861：base 记这一轮**递出去的原文**（text），每一条版本从此自带
+              // 比较基准。跳版本时不再用「当前面板是什么」当基准，对比因此不会
+              // 随浏览顺序漂移（用户原话「中途还变来变去的」）。
+              const baseText = String(text || '').trim()
+        const baseIndex = indexOfResultText(baseText)
+        const fresh = pushResult({ text: result.text, mode: mode === 'rewriteFrom' ? 'rewrite' : mode, at: Date.now(), base: text, baseFrom: mode === 'rewriteFrom' ? 'last' : (mode === 'continue' ? 'continue' : 'original'), baseIndex })
               // 记下「我们刚写回输入框的是什么」，下一轮判断是不是同一段要用
               // 它（见 originRef 的注释）。
               lastResultRef.current = result.text
+              // m23425：同时记下这一轮**递出去的是什么**（就是上面 pushHistory
+              // 的那个 text）。「基于上一次内容」重算时用它，不用面板里现在这版。
+              lastInputRef.current = text
+              // m24230：连同「这一轮走的是哪一档」一起记，面板标题据此说明基准来源。
+              lastInputFromRef.current = mode === 'rewriteFrom' ? 'last' : (mode === 'continue' ? 'continue' : 'original')
               continuesRef.current = mode === 'continue' ? continuesRef.current + 1 : 0
               // 新的一轮生成就是新的分支：前进栈作废，别让用户重做回旧分支。
               clearRedo()
               setBubble({
-                original: anchor,
+                // original 永远是链头草稿（m22250 问题4）：撤销到底、跳回第一版
+                // 都要落在最初那份原文上，而不是「本轮是从哪儿开始重写的」。
+                original: baseDraftRef.current || anchor,
                 text: result.text,
+                // m22250：diff 的对比基线单独一个字段——「基于上一次重新生成」
+                // 时应该和上一版比，而不是和链头草稿比（那样整段都是红的）。
+                // m23861：其余口径（rewrite / continue）也一律记**本轮递出去的
+                // 原文**。以前这里写空串，面板就退回 bubble.original（链头草稿）
+                // 去比——continue 轮于是拿「第一版 → 第 N 版」当差异，而它自己的
+                // diff 又是「上一版 → 新版」，两套口径混着走，用户看到的就是
+                // 「对比的内容不是用最初版本，中途还变来变去」。现在一条版本一个
+                // 基准，diff 和 diffBase 永远同源。
+                diffBase: text,
+                // m24230：基准的**来源**跟着这一轮一起进面板，标题才能写清楚
+                // 「这一版是跟最初版本比，还是跟上一版比」。
+                diffBaseFrom: mode === 'rewriteFrom' ? 'last' : (mode === 'continue' ? 'continue' : 'original'),
+              // m24240：基准落在这条链的第几版（1 起，和「历史版本」列表里的
+              // 序号同一套）。pushResult 前取的值，正好是这一版之后的结果区
+              // 下标，不会因为刚 push 进去而错位。
+              diffBaseIndex: baseIndex,
                 // m15602：把两件「看不见的事」写进提示语——换了新草稿所以历史重开
                 // （chainReset），以及这次输出被最大长度截断（truncatedNote）。
+                // m22250：模型还是给了和某一版完全相同的内容时，明说一句。
                 message: [mode === 'continue' ? t('continued') : t('enhanced')]
                   .concat(chainReset ? [t('chainReset')] : [])
                   .concat(result.truncated ? [t('truncatedNote')] : [])
+                  .concat(!fresh ? [t('dupResult')] : [])
                   .join(' · '),
                 diff: diffLines(text, result.text),
                 continues: continuesRef.current,
                 ...(draftFailed ? { draftFailed: true } : {}),
               })
-            } else if (result && result.text === text) {
-              setBubble({ message: t('nochange') })
+            } else if (result && typeof result.text === 'string') {
+              // m22250：模型原样返回同一段文字。以前这里只 setBubble({message})，
+              // 面板就丢掉 text 字段 → Bubble 的 editable 变 false，面板塌成一个
+              // 只有一行提示的空壳，「重新生成」按钮整排消失，用户只能关掉重来。
+              // 现在保留当前这一版（text/original/continues 全带上），只把提示换成
+              // nochange —— 用户能直接改字、继续、或者换个口径再试。
+              // m24285：判定已升级为 isMeaningfulChange，这里同时接住「逐字相同」
+              // 和「只差一个标点/一个字的敷衍改写」两类，提示语统一 nochange。
+              setBubble((current) => Object.assign({}, current || {}, {
+                error: false,
+                text: current && typeof current.text === 'string' ? current.text : text,
+                original: current && typeof current.original === 'string'
+                  ? current.original
+                  : (baseDraftRef.current || text),
+                continues: current && typeof current.continues === 'number'
+                  ? current.continues
+                  : continuesRef.current,
+                message: t('nochange'),
+                diff: null,
+              }))
             } else {
               setBubble({ error: true, message: t('failed') })
             }
@@ -2310,20 +2903,35 @@ window.__ModuleLoader__.load({
             () => { clearTimeout(timer); abortRef.current = null; setBusy(false) },
             () => { clearTimeout(timer); abortRef.current = null; setBusy(false) },
           )
-      }, [busy, draft, sessionId, inputActions, t, getCurrentModel, pushHistory, pushResult, maxChars])
+      }, [busy, draft, sessionId, inputActions, t, getCurrentModel, pushHistory, pushResult, indexOfResultText, maxChars])
 
       const enhance = React.useCallback(() => run('rewrite', null), [run])
 
-      // Re-run from the pre-enhancement text, discarding whatever is in the
-      // panel now. Falls back to the live draft for a bubble that never had one.
-      // m17616：中断后 bubble 可能已经没有 original（面板被收起过一次），此时退回
-      // 上一轮真正递出去的文字（attemptRef）——它才是用户想再试一遍那段。
-      const regenerate = React.useCallback(() => {
-        const base = bubble && bubble.original != null
-          ? bubble.original
-          : (attemptRef.current || draft)
+      // 「重新生成」两种口径（m22259 下拉）：
+      //   from === 'original'（默认）→ 用链头草稿重算，丢掉面板里的改动与续写；
+      //   from === 'last'            → 用**上一轮递出去的那段提示词**重算。
+      // 都不读 bubble.original 了：那个字段现在存的是链头草稿，指向「最初」，
+      // 拿它当「上一次」会把两档做成同一件事。
+      //
+      // m23425：「上一次」曾经实现成「拿面板现在这一版再算一遍」，用户指出不对：
+      // 「当前面板显示的是刚刚生成出来的，然后不满意，所以才要用上一次的提示词
+      // 重新生成一次」。刚生成的那版是**结果**，拿它当输入只是把它再改一遍；
+      // 用户要的是退回上一轮的**输入**再跑一次，看看能不能得到更满意的一版。
+      // 所以这里取 lastInputRef（每轮成功时写入），面板里后来被手工改过的字不
+      // 参与——用户改字是想改这一轮的结果，不是想改重算的基准。
+      const regenerate = React.useCallback((from) => {
+        if (from === 'last') {
+          const last = lastInputRef.current !== ''
+            ? lastInputRef.current
+            : (baseDraftRef.current || (attemptRef.current || draft))
+          if (!last) return
+          run('rewriteFrom', last)
+          return
+        }
+        const base = baseDraftRef.current || (attemptRef.current || draft)
+        if (!base) return
         run('rewrite', base)
-      }, [run, bubble, draft])
+      }, [run, draft])
 
       // Extend the text currently shown in the panel, not the draft — after an
       // in-panel edit those differ, and the user means what they can see.
@@ -2449,6 +3057,18 @@ window.__ModuleLoader__.load({
       // m14345：这里原来套了一层宿主 Tooltip（鼠标放上去弹出的黑色气泡）。用户
       // 要求去掉，于是直接交出发按钮本身。不改成原生 title —— 那同样是弹一个框。
       // 无障碍交给按钮自己的 aria-label。
+      // m07254：过程态气泡走 portal + position:fixed，锚点坐标由 placeBubble 从
+      // 按钮的 rect 算出来。放在 portal 里是因为宿主输入区包裹层带 overflow:hidden，
+      // 留在 DOM 里会被裁掉（这也是当初菜单只能朝上弹的同一个原因）。
+      const PHASE_KEYS = ['phasePreparing', 'phaseConnecting', 'phaseCalling', 'phaseStreaming']
+      const busyBubble = busy
+        ? ReactDOM.createPortal(h('div', {
+            className: 'pe_busy_bubble' + (bubbleOn ? ' pe_on' : ''),
+            role: 'status',
+            'aria-live': 'polite',
+            style: { left: bubblePos.left + 'px', top: bubblePos.top + 'px' },
+          }, h('span', { className: 'pe_dot' }), t(PHASE_KEYS[bubblePhase] || PHASE_KEYS[0])), document.body)
+        : null
       return h(Fragment, null, trigger,
         bubble && settingsToastStyle !== 'none'
           ? ReactDOM.createPortal(h(Bubble, {
@@ -2469,6 +3089,8 @@ window.__ModuleLoader__.load({
               // 引用，Bubble 的 effect 必须靠这个数才会重跑（详见 Bubble 里
               // showResults 的注释）。
               resultsDepth,
+              // m22250：链头草稿还在，就允许「基于最初版本」重算（哪怕面板里的字被删空了）。
+              regenReady: baseDraftRef.current !== '',
               // m17616：面板底栏那颗「中断」走 stopFromPanel —— 不退出面板，
               // 把在飞的那轮停掉，面板连当前这版结果留在原处。
               onStop: stopFromPanel,
@@ -2479,7 +3101,8 @@ window.__ModuleLoader__.load({
               panelBg: settingsPanelBg,
               panelOpacity: settingsPanelOpacity,
             }), document.body)
-          : null)
+          : null,
+        busyBubble)
     }
 
     /**
@@ -2548,13 +3171,18 @@ window.__ModuleLoader__.load({
       }
     }
 
-    function Bubble({ bubble, busy, onUndo, onRedo, redoDepth, onDismiss, onEdit, onRegenerate, onContinue, onCopy, copied, onJumpToResult, results, resultsDepth, onStop, t, elapsed, continueMax, variant, panelBg, panelOpacity, preview }) {
+    function Bubble({ bubble, busy, onUndo, onRedo, redoDepth, onDismiss, onEdit, onRegenerate, onContinue, onCopy, copied, onJumpToResult, results, resultsDepth, onStop, t, elapsed, continueMax, variant, panelBg, panelOpacity, preview, regenReady }) {
       const rootRef = React.useRef(null)
       const taRef = React.useRef(null)
+      // 文字框/历史版本之间的高度分隔条（m24205）。
+      const splitRef = React.useRef(null)
       const [pos, setPos] = React.useState(null)
       // 面板尺寸：只在这一次打开期间有效（用户 m06674 选了这一项），所以是普通
       // state、不落 localStorage——关掉面板再开就回到 CSS 里的 720×620。
       const [size, setSize] = React.useState(null)
+      // 文字框自己的高度（m24205）：用户在分隔条上拖动后才有值，null 表示跟着
+      // 弹性布局走（= 原来的行为）。和 size 一样只在本次打开期间有效。
+      const [editH, setEditH] = React.useState(null)
       const [showDiff, setShowDiff] = React.useState(false)
       // 历史版本列表默认收起，而且**不再自动展开**。用户 m05268 说面板太
       // 长，要求「历史版本加一个可以折叠」——以前超过 2 版就自己摊开成一条
@@ -2566,6 +3194,15 @@ window.__ModuleLoader__.load({
       // 往同一个引用上 push，identity 和 length 在子组件眼里都不变，所以
       // effect 不能依赖 results.length，必须依赖父组件显式传来的 resultsDepth。
       const [showResults, setShowResults] = React.useState(false)
+      // m22250：重新生成下拉的展开状态。
+      const [showRegenMenu, setShowRegenMenu] = React.useState(false)
+      // m23401：整组「主按钮 + 箭头 + 菜单」的容器。点外面要收起菜单，判据就是
+      // 「这次 pointerdown 的落点还在不在这个容器里」——主按钮和箭头也算里面，
+      // 否则点主按钮会先被外面的监听收掉菜单、再被自己的 onClick 又打开一次。
+      const regenRef = React.useRef(null)
+      // m22266：上一次实际用的是哪一种口径（'original' | 'last'）。
+      // 目的只有一个：让按钮自己说出来「现在算的是哪一份」，不用靠记。
+      const [regenFrom, setRegenFrom] = React.useState('original')
 
       const changed = (bubble.diff || []).filter((ln) => ln.type !== 'equal')
       // 对比按钮以前只在 bubble.diff 里有内容时出现。用户原话（m02696）：
@@ -2575,7 +3212,14 @@ window.__ModuleLoader__.load({
       // 改成：只要面板里这版文本和**进入面板时的原文**（bubble.original）
       // 不同，就一定有差异可看；没有 diff 缓存时用行级 diff 现算一份兜底。
       // 计数统一走 shownAdded/shownRemoved，避免出现两套数字。
-      const baseline = typeof bubble.original === 'string' ? bubble.original : ''
+      // m22259：「基于上一次重新生成」时的对比基线是上一版，不是链头草稿
+      // （和链头比会把整段涂成红色/绿色）。diffBase 为空则退回 original。
+      // m23861：diffBase 现在由每一轮生成/撤销/重做/跳版本自己写实，所以这里
+      // 拿到的就是「这一版是从哪段文本变过来的」，不会再在链头草稿和上一版之间
+      // 来回摇摆（用户截图里同一版两次点进去对比内容不一样）。
+      const baseline = typeof bubble.diffBase === 'string' && bubble.diffBase !== ''
+        ? bubble.diffBase
+        : (typeof bubble.original === 'string' ? bubble.original : '')
       const fallback = changed.length === 0 && typeof bubble.text === 'string' && bubble.text !== baseline
         ? diffLines(baseline, bubble.text)
         : []
@@ -2587,6 +3231,28 @@ window.__ModuleLoader__.load({
       const shownAdded = diffView.added
       const shownRemoved = diffView.removed
       const hasDiff = diffView.rows.length > 0
+      // m23861：对比基准的可读标签。空基准（链头草稿 / 还没有基准）就不显示，
+      // 免得标题后面挂一句空话。
+      const diffBaseLabel = typeof baseline === 'string' && baseline !== ''
+        ? String(t('diffBaseFrom')).replace('{n}', String(baseline.replace(/\s+/g, ' ').trim().length))
+        : ''
+      // m24230：把基准的**来源**也写进标题。用户 m02177 选了「基于上一次内容」，
+      // 但标题只写「基准 N 字」，而最初版本和上一版的字数完全一样（同一段提示词
+      // 的迭代），他看着就像「还是拿最初版本比的」。现在直接写
+      // 「基准：基于上一次内容 · 25 字」，不用靠字数猜。
+      const diffBaseSrcKey = bubble.diffBaseFrom === 'last'
+        ? 'diffBaseLast'
+        : (bubble.diffBaseFrom === 'continue' ? 'diffBaseContinue' : (bubble.diffBaseFrom === 'original' ? 'diffBaseOriginal' : ''))
+      const diffBaseSrc = diffBaseSrcKey ? t(diffBaseSrcKey) : ''
+      // m24240：来源后面挂上「（第 N 版）」。N 来自 bubble.diffBaseIndex（生成/
+      // 跳版本时从结果历史栈里反查出来的 1 起下标），拿不到就只写来源不写编号。
+      const diffBaseVer = typeof bubble.diffBaseIndex === 'number' && bubble.diffBaseIndex > 0
+        ? String(t('diffBaseVer')).replace('{v}', String(bubble.diffBaseIndex))
+        : ''
+      const diffBaseName = diffBaseSrc + diffBaseVer
+      const diffBaseText = diffBaseLabel
+        ? (diffBaseName ? String(t('diffBaseSrc')).replace('{src}', diffBaseName).replace('{n}', String(baseline.replace(/\s+/g, ' ').trim().length)) : diffBaseLabel)
+        : ''
       // 功能 6：字数 / token 预估。读的是面板里当前这版文字（编辑时随输入实时更新），
       // 让用户对「这段提示词有多大」有个底。
       //
@@ -2606,6 +3272,10 @@ window.__ModuleLoader__.load({
       const contLeft = Math.max(0, contMax - (typeof bubble.continues === 'number' ? bubble.continues : 0))
       const lastContinue = !busy && !continueBlocked && contMax > 0 && contLeft === 1
       const editable = !bubble.error && typeof bubble.text === 'string'
+      // m22250：面板是空的（比如用户把结果全删了）也能「基于最初版本」重算一遍，
+      // 因为链头草稿还在父组件的 baseDraftRef 里（regenReady 就是它非空的意思）。
+      // 这里刻意不叫 regenReady —— 那是 props 名，同名 const 会直接 SyntaxError。
+      const canRegen = editable && (String(bubble.text || '').trim() !== '' || !!regenReady)
       // 面板里的文字没能写回输入框时（宿主的 setDraft 抛错/编辑器已卸载）要说出来：
       // 否则用户看到的是「面板退了、输入框没退」，只会以为撤销坏了。
       const draftWriteFailed = !!bubble.draftFailed
@@ -2614,13 +3284,87 @@ window.__ModuleLoader__.load({
       // 结果历史列表（功能 3）。数组来自父组件的 ref，父组件在每次生成成功后
       // 会 pushResult —— ref 不触发重渲染，所以渲染时机搭的是 bubble 更新那
       // 一趟（同一轮 setState 批处理），看到的就是最新的栈。
-      const resultsList = Array.isArray(results) ? results.map((entry, index) => ({
-        key: index + ':' + entry.text.slice(0, 16),
+      //
+      // m22266：摘要必须带出「不一样的那一段」。中文提示词每轮改写往往前十几个
+      // 字完全相同（都从原句开头起），旧版固定截前 42 字，于是几条历史在列表里
+      // 长得一模一样——用户看到的就是「重复」。现在先算所有条目共有的开头有多
+      // 长，摘要从分叉处往前留 6 个字开始截，保证每条都露出差异。
+      const resultTexts = Array.isArray(results)
+        ? results.map((entry) => (entry && typeof entry.text === 'string' ? entry.text : ''))
+        : []
+      let commonHead = 0
+      // 只拿「真正的生成结果」算共同开头：
+      //  · 第 0 条是链头草稿（mode==='draft'），它跟结果八竿子打不着，拿它当
+      //    基准会让共同开头恒为 0，摘要又退回从第一个字截，几条就长得一模一样
+      //    ——m22266 用户说的「重复」就是这么来的；
+      //  · 空串同理（面板还没拿到原稿时是空串）。
+      const solidTexts = resultTexts.filter((text, i) => text !== '' && !(results[i] && results[i].mode === 'draft'))
+      const headPool = solidTexts.length > 1 ? solidTexts : resultTexts.filter((x) => x !== '')
+      if (headPool.length > 1) {
+        const first = headPool[0]
+        let same = true
+        for (let i = 0; i < first.length && same; i += 1) {
+          const ch = first.charCodeAt(i)
+          for (let j = 1; j < headPool.length; j += 1) {
+            if (headPool[j].charCodeAt(i) !== ch) { same = false; break }
+          }
+          if (same) commonHead += 1
+        }
+      }
+      const SNIP_MAX = 40
+      // 这条文本相对「所有版本的共同开头」第几个字开始跟别人不一样。
+      // 差异位置之后才有信息量，摘要的窗口就直接落在那里。
+      const divergeAt = (text, index) => {
+        let i = commonHead
+        if (text === '') return 0
+        while (i < text.length) {
+          let differs = false
+          for (let j = 0; j < resultTexts.length && !differs; j += 1) {
+            if (j === index) continue
+            const other = resultTexts[j]
+            // 空条目和链头草稿都不参与比较：前者第一下就算「有差异」，后者
+            // 根本不是生成结果，拿它当兄弟只会把差异位置推到第 0 个字。
+            if (other === '' || (results[j] && results[j].mode === 'draft')) continue
+            if (i >= other.length || other.charCodeAt(i) !== text.charCodeAt(i)) differs = true
+          }
+          // 只跟「比自己短的版本」比时容易误判，所以差异还要求后面还有一段空间。
+          if (differs) return i
+          i += 1
+        }
+        return text.length
+      }
+      const snipOf = (text, index) => {
+        if (text.length <= SNIP_MAX) return text
+        const room = SNIP_MAX
+        // 差异处往前留 12 个字（后面要能装下「第X版：…」这段不同内容），
+        // 所以窗口是偏后对齐的；差异太靠后时退回「取末尾一段」。
+        const diverge = divergeAt(text, index)
+        let start = diverge - 12
+        if (start < 0) start = 0
+        if (start + room > text.length) start = Math.max(0, text.length - room)
+        const end = Math.min(text.length, start + room)
+        const head = start > 0 ? '…' : ''
+        const tail = end < text.length ? '…' : ''
+        return head + text.slice(start, end) + tail
+      }
+      const resultsList = resultTexts.map((text, index) => ({
+        key: index + ':' + text.slice(0, 16),
         index,
-        isCurrent: typeof bubble.text === 'string' && bubble.text === entry.text,
-        label: entry.mode === 'continue' ? t('modeContinue') : (entry.mode === 'rewrite' ? t('modeRewrite') : t('modeOther')),
-        snippet: entry.text.length > 42 ? entry.text.slice(0, 42) + '…' : entry.text,
-      })) : []
+        text,
+        isCurrent: typeof bubble.text === 'string' && bubble.text === text,
+        // m23861：每一版都带上它**自己的**比较基准文本（生成它的那一轮递出去的
+        // 原文）。以前跳版本时用「当前面板文本 → 目标版本」现算，于是同一版在两
+        // 个不同时刻点进去，对比出来的东西完全不一样——用户原话「我用的全部都
+        // 是最开始版本生成的，但是对比的内容不是用的最初的版本，中途还变来变去」。
+        // 现在基准跟着版本走，跳到哪一版看到的永远是「它的输入 → 它的输出」。
+        base: typeof results[index].base === 'string' ? results[index].base : '',
+        // m22250：第 0 条（链头草稿）标成「最初」，和生成结果区分开。
+        // m05131：mode 'edit' = 用户在面板里改过字的那一手，标成「编辑」。
+        label: results[index].mode === 'draft'
+          ? t('modeDraft')
+          : (results[index].mode === 'continue' ? t('modeContinue') : (results[index].mode === 'rewrite' ? t('modeRewrite') : (results[index].mode === 'edit' ? t('modeEdit') : t('modeOther')))),
+        snippet: snipOf(text, index),
+      }))
 
       // There is nothing to measure any more. The panel opens dead centre from
       // CSS (`left/top:50%` plus a negative translate on the root), and it has a
@@ -2629,10 +3373,41 @@ window.__ModuleLoader__.load({
       // real pixels. Nothing here is allowed to re-position it behind the user's
       // back. The only effect left is Escape-to-close.
       React.useEffect(() => {
-        const onKey = (event) => { if (event.key === 'Escape') onDismiss() }
+        // m23079：口径菜单开着时，Esc 先收菜单（用户的心理预期是「关掉这个小
+        // 浮层」而不是「把整个结果面板关掉」），菜单已收起时 Esc 才关面板。
+        const onKey = (event) => {
+          if (event.key !== 'Escape') return
+          if (showRegenMenu) { setShowRegenMenu(false); return }
+          onDismiss()
+        }
         window.addEventListener('keydown', onKey)
         return () => window.removeEventListener('keydown', onKey)
-      }, [onDismiss])
+      }, [onDismiss, showRegenMenu])
+
+      // m23401：点菜单外面要收起来（用户原话「点击旁边它不会回去」）。以前只有
+      // 「选中某一项」和 Esc 两条退路：点正文、点别的按钮、点窗口空白处，菜单
+      // 就一直杵在那里，还会挡住底下的字。
+      // 用 pointerdown（捕获阶段）而不是 click：按下的那一刻就收，用户不会先
+      // 看到一次误触发的点击效果；主按钮和箭头在容器内，所以不会被这里抢掉。
+      React.useEffect(() => {
+        if (!showRegenMenu) return undefined
+        if (typeof document === 'undefined' || typeof document.addEventListener !== 'function') return undefined
+        const onDown = (event) => {
+          const root = regenRef.current
+          const target = event && event.target
+          // contains 在极简测试替身里可能不存在：那就当「点在外面」，宁可多收一次。
+          if (root && target && typeof root.contains === 'function' && root.contains(target)) return
+          setShowRegenMenu(false)
+        }
+        document.addEventListener('pointerdown', onDown, true)
+        return () => document.removeEventListener('pointerdown', onDown, true)
+      }, [showRegenMenu])
+
+      // 菜单开着的时候如果这一档突然用不了了（开始生成 / 正文被清空），菜单要
+      // 自己收掉：留着它，点进去也只会把已经生效的口径再改一遍。
+      React.useEffect(() => {
+        if (showRegenMenu && (busy || !canRegen)) setShowRegenMenu(false)
+      }, [busy, canRegen, showRegenMenu])
 
       // 拖拽与缩放共用一套手势：按下之后把 pointermove/pointerup 挂到 window 上。
       //
@@ -2642,7 +3417,7 @@ window.__ModuleLoader__.load({
       // 或者 setPointerCapture 抛错被 catch 吞掉——dragRef 就永远不为 null，
       // 之后面板会一直粘着鼠标跑，点什么按钮都点不中。挂 window 监听、并且把
       // pointercancel/blur 也算作结束，手势就只剩「结束」一种结局。
-      const beginGesture = (event, onMove) => {
+      const beginGesture = (event, onMove, onDone) => {
         if (event.button !== undefined && event.button !== 0) return
         if (typeof window === 'undefined') return
         if (typeof event.preventDefault === 'function') event.preventDefault()
@@ -2652,6 +3427,7 @@ window.__ModuleLoader__.load({
           window.removeEventListener('pointerup', finish, true)
           window.removeEventListener('pointercancel', finish, true)
           window.removeEventListener('blur', finish, true)
+          if (typeof onDone === 'function') onDone()
         }
         window.addEventListener('pointermove', move, true)
         window.addEventListener('pointerup', finish, true)
@@ -2674,14 +3450,48 @@ window.__ModuleLoader__.load({
 
       // 右下角抓手：按指针位移改尺寸，夹在「还看得见内容」的范围内（最小
       // 360×260，最大不超过窗口）。
+      // m24201：抓手挂在 .pe_rz 上，它是面板根的绝对定位子元素；这里读的是
+      // rootRef（整个 pe_bubbleroot）的 box —— 那是 position:fixed 的外壳，尺寸
+      // 由内层 .pe_bubble 决定，两者一致，用 root 拿宽高是对的。
       const startResize = (event) => {
         if (event.stopPropagation) event.stopPropagation()
         const root = rootRef.current
         if (!root) return
         const box = root.getBoundingClientRect()
-        const start = { x: event.clientX, y: event.clientY, w: box.width, h: box.height }
+        const start = { x: event.clientX, y: event.clientY, w: box.width || 720, h: box.height || 620 }
         beginGesture(event, (e) => {
           setSize(clampPanelSize(start, e.clientX - start.x, e.clientY - start.y, { w: window.innerWidth, h: window.innerHeight }))
+        })
+      }
+
+      // 文字框高度分隔条（m24205）：用户要「历史版本上面那块」能自己收放。
+      // 抓手在 .pe_split 上，拖动改的是 .pe_edit 的 px 高度；上限取「面板内
+      // 可用高度 - 100」，给历史版本和底栏留出位置，下限 56px（大约三行）。
+      // 面板总高不变，只是上方文字框与下方历史区此消彼长。
+      const startEditResize = (event) => {
+        if (event.stopPropagation) event.stopPropagation()
+        // 正常情况下从 rootRef 找 textarea；拿不到（例如某些渲染环境下 ref 还没
+        // 挂上）就从事件源往上找面板根兜底，别因为一个空 ref 让手势整个不发生。
+        let box = rootRef.current
+        if (!box) {
+          let n = event && event.currentTarget ? event.currentTarget : null
+          while (n && n.parentNode) n = n.parentNode
+          box = n
+        }
+        const ta = box && typeof box.querySelector === 'function' ? box.querySelector('.pe_edit') : null
+        // 拿不到 textarea 也不影响拖：起点高度直接沿用当前 editH，没有就从 150 起。
+        const rect = ta && typeof ta.getBoundingClientRect === 'function' ? ta.getBoundingClientRect() : null
+        const bodyEl = ta ? ta.parentNode : null
+        const bodyH = bodyEl && typeof bodyEl.getBoundingClientRect === 'function'
+          ? bodyEl.getBoundingClientRect().height : 0
+        const maxH = Math.max(PANEL_MIN_H, bodyH > 0 ? bodyH - 100 : 400)
+        const from = rect && rect.height > 0 ? rect.height : (editH !== null ? editH : 150)
+        const start = { y: event.clientY, h: from }
+        if (splitRef.current && splitRef.current.classList) splitRef.current.classList.add('dragging')
+        beginGesture(event, (e) => {
+          setEditH(clampRound(start.h + (e.clientY - start.y), 56, maxH))
+        }, () => {
+          if (splitRef.current && splitRef.current.classList) splitRef.current.classList.remove('dragging')
         })
       }
 
@@ -2692,7 +3502,7 @@ window.__ModuleLoader__.load({
       // 像坏了（m12866 用户截图：一整块空白 + 一个莫名其妙的复制错误信息）。
       if (!editable) classes.push('compact')
       // 显示透明 / 毛玻璃 / 不透明由设置决定；缺省是最透的那种。
-      classes.push('bg_' + (panelBg === 'glass' || panelBg === 'solid' ? panelBg : 'clear'))
+      classes.push('bg_' + (['glass', 'doodle', 'holo', 'cyber'].indexOf(panelBg) !== -1 ? panelBg : 'minimal'))
 
       // 滑杆是"在不透明底色上再降 alpha"，预览和真实面板共用这一个内联变量。
       const opacity = Math.min(100, Math.max(10, Number(panelOpacity) || 100))
@@ -2763,12 +3573,28 @@ window.__ModuleLoader__.load({
             ? h('div', { className: 'pe_body' },
                 h('textarea', {
                   ref: taRef,
-                  className: 'pe_edit',
+                  className: 'pe_edit' + (editH !== null ? ' manual' : ''),
                   value: bubble.text,
                   spellCheck: false,
                   'aria-label': t('edited'),
                   onChange: (event) => onEdit(event.target.value),
+                  // m24205：拖过分隔条之后高度写死，历史版本被顶到下面去。
+                  style: editH !== null ? { height: editH + 'px' } : undefined,
                 }),
+                // m24205：文字框与历史版本之间的高度分隔条。只有真的有历史版本
+                // 时才画——没有下方区域可分配，拖了也没意义。双击恢复自动高度。
+                resultsList && resultsList.length > 0 && !busy
+                  ? h('div', {
+                      ref: splitRef,
+                      className: 'pe_split',
+                      role: 'separator',
+                      'aria-orientation': 'horizontal',
+                      'aria-label': t('splitHint'),
+                      title: t('splitHint'),
+                      onPointerDown: startEditResize,
+                      onDoubleClick: () => setEditH(null),
+                    })
+                  : null,
                 // 结果历史（功能 3）：一条时间轴，每条是「第 N 版 · 模式 ·
                 // 前若干字」，点击就把那一版放回面板和输入框。只列文字、不渲
                 // 染整段正文——否则面板会被历史文本撑爆。
@@ -2810,6 +3636,15 @@ window.__ModuleLoader__.load({
                   ? h('div', { className: 'pe_diff' },
                       h('div', { className: 'pe_diff_title' },
                         t('diffTitle') + ' · ' + shownAdded + t('added') + ' / ' + shownRemoved + t('removed'),
+                        // m23861：把「跟哪一段比」直接写在标题后面。用户在截图里
+                        // 最困惑的就是「我用的都是最初的版本，可对比出来的东西
+                        // 不像最初那版」——这一行让基准不再隐形。基准是本轮递出
+                        // 去的那段原文，就是这一版的上一手。
+                        // m24230：再带上来源（最初版本 / 上一次内容 / 续写），
+                        // 免得两档字数一样时只能靠猜。
+                        diffBaseText
+                          ? h('span', { className: 'pe_diff_base', title: baseline }, diffBaseText)
+                          : null,
                       ),
                       hasDiff
                         ? h('div', { className: 'pe_diff_lines' },
@@ -2844,7 +3679,71 @@ window.__ModuleLoader__.load({
                         disabled: !redoAvailable, onClick: onRedo,
                       }, h(RedoIcon)),
                     ),
-                h('button', { type: 'button', className: 'pe_act ghost', disabled: busy, title: t('regenHint'), onClick: onRegenerate }, t('regenerate')),
+                // m22250：「重新生成」拆成一个主按钮 + 一个箭头，箭头展开两种口径。
+                // 用户原话：「都按照用户体验最舒服的方式来让用户使用的时候不会迷惑」。
+                // m22266 收紧：菜单只留两行纯文字（原来的两行副标题太占地方，用户
+                // 原话「下拉按钮中的内容不要那么多的话，简洁一些」），改为：
+                //   · 主按钮上直接写出**当前用的是哪一种**（用户原话「选择了哪一个
+                //     按钮上也看不到是哪一个」），
+                //   · 菜单里用 ✓ 标记当前那一项。
+                h('span', { ref: regenRef, className: 'pe_regen' + (showRegenMenu ? ' on' : '') },
+                  h('button', {
+                    type: 'button',
+                    className: 'pe_act ghost pe_regen_main',
+                    disabled: busy || !canRegen,
+                    title: regenFrom === 'last' ? t('regenFromLast') : t('regenFromOriginal'),
+                    'data-regen-from': regenFrom,
+                    // 主按钮永远是「按现在这一档跑」，所以开跑的同时菜单没有理由
+                    // 还开着（放在外面点也会收，这里只是少一次多余的展开）。
+                    onClick: () => { setShowRegenMenu(false); onRegenerate(regenFrom) },
+                  }, t('regenerate'),
+                    // 口径写在按钮上——不用展开菜单也知道现在算的是哪一份。
+                    h('span', { className: 'pe_regen_tag' },
+                      regenFrom === 'last' ? t('regenShortLast') : t('regenShortOriginal'))),
+                  h('button', {
+                    type: 'button',
+                    className: 'pe_regen_caret',
+                    disabled: busy || !canRegen,
+                    title: t('regenMenu'),
+                    'aria-label': t('regenMenu'),
+                    'aria-haspopup': 'menu',
+                    'aria-expanded': !!showRegenMenu,
+                    // m23079：busy 时 disabled 已经挡住鼠标，但键盘/程序化调用仍
+                    // 可能穿过来，所以这里再守一道 —— 否则会在生成中途切口径，
+                    // 让正在跑的那轮和下一次重算的依据不一致。
+                    onClick: () => { if (busy || !canRegen) return; setShowRegenMenu((v) => !v) },
+                  }, h('span', { className: 'pe_regen_tri' })),
+                  showRegenMenu
+                    ? h('div', { className: 'pe_regen_menu', role: 'menu' },
+                        // m23079：菜单项**只切换口径、不立刻重算**（用户原话
+                        // 「点击只是选择而不是立马执行」），选完回到底栏按主按钮开始。
+                        h('div', { className: 'pe_regen_title' }, t('regenMenu')),
+                        h('button', {
+                          type: 'button', role: 'menuitemradio',
+                          'aria-checked': regenFrom === 'original',
+                          className: 'pe_regen_item' + (regenFrom === 'original' ? ' on' : ''),
+                          // m23425：解释改成悬停提示（原生 title），菜单里只留
+                          // 「勾 + 名字」一行——用户原话「这个做的简单一些，就是
+                          // 下面这行的提示改为鼠标放置在上面的时候显示」。
+                          title: t('regenFromOriginalSub'),
+                          onClick: () => { setRegenFrom('original'); setShowRegenMenu(false) },
+                        },
+                          h('span', { className: 'pe_regen_check' }, regenFrom === 'original' ? '✓' : ''),
+                          h('span', { className: 'pe_regen_label' }, t('regenFromOriginal')),
+                        ),
+                        h('button', {
+                          type: 'button', role: 'menuitemradio',
+                          'aria-checked': regenFrom === 'last',
+                          className: 'pe_regen_item' + (regenFrom === 'last' ? ' on' : ''),
+                          title: t('regenFromLastSub'),
+                          onClick: () => { setRegenFrom('last'); setShowRegenMenu(false) },
+                        },
+                          h('span', { className: 'pe_regen_check' }, regenFrom === 'last' ? '✓' : ''),
+                          h('span', { className: 'pe_regen_label' }, t('regenFromLast')),
+                        ),
+                      )
+                    : null,
+                ),
                 h('button', {
                   type: 'button',
                   className: 'pe_act ghost',
@@ -3122,180 +4021,50 @@ window.__ModuleLoader__.load({
      * 最多添加3个自己的」「那五个和内置都用英语吧但是支持翻译查看，然后要提示词
      * 标准一点」。
      *
-     * 每条都是一段完整可用的提示词正文（角色 + 方法 + 输出形态），英文书写；
-     * `zh` 只是给「中文对照」看的译文，永远不会被发送。硬性输出规则（只输出改写
-     * 结果、不加解释）由宿主在发送前固定追加，正文里不再重复——见 src/config.js
-     * 的 composeSystemPrompt。
+     * m05245：六条全部换成用户手写的长文版（润色师/瘦身师/架构师/规格工程师/
+     * 教练/口语化改写师）。zh 逐字采用用户原文（末尾追加防呆句）；text 与 zh
+     * 同文——用户没给英文译文，且这批提示词自带「语言与输入一致」约束，发中文
+     * 正文与之一致。
      *
      * 第 0 条必须与 src/config.js 的 DEFAULT_SYSTEM_PROMPT_BODY 完全一致（_t7
      * 会断言两者相等），因为「留空 = 内置默认」在宿主侧走的是那一份。
      */
     const PROMPT_TEMPLATES = [
       {
-        id: 'default',
-        nameKey: 'promptDefault',
-        text: `You are a prompt engineer. Rewrite the user's rough draft into a precise, executable prompt for an AI coding assistant.
-
-Method:
-1. Identify the goal, the inputs and context, the constraints, the expected deliverable, and how completion can be verified.
-2. Make the implicit explicit — name the file, path, technology, command or number the draft implies — but never invent a requirement the draft does not carry.
-3. Restructure the result so the agent can act without asking follow-up questions: goal first, then context, then requirements, then the concrete steps or deliverable, then the acceptance check.
-4. Keep every explicit requirement, path, identifier, version and number from the original exactly as written.
-5. Remove greetings, backstory, repetition, and anything that does not change what the agent does.
-
-Output shape:
-- One title line stating the task, followed by labelled sections (Goal, Context, Requirements, Steps, Acceptance) when the draft carries enough content for them; otherwise a single tight paragraph.
-- Imperative mood, addressed to the agent, plain text only.`,
-        zh: `你是一名提示词工程师。把用户的粗糙草稿改写成 AI 编码助手可以直接执行、没有歧义的提示词。
-
-方法：
-1. 先看清目标、输入与上下文、约束、预期交付物，以及「怎么算做完」。
-2. 把隐含的东西写明——草稿暗示的文件、路径、技术、命令或数字都要落到字面上——但绝不新增草稿里没有的要求。
-3. 重排结构，让助手不需要反问就能动手：先目标，再上下文，再要求，再具体步骤或交付物，最后验收方式。
-4. 原文里明确写出的要求、路径、标识符、版本号、数字，一律原样保留。
-5. 删掉寒暄、背景故事、重复表述，以及任何不改变助手行为的内容。
-
-输出形态：
-- 内容足够时：一行任务标题 + 分节小标题（目标 / 上下文 / 要求 / 步骤 / 验收）；内容很少时：一段紧凑的话。
-- 用祈使句对助手说话，纯文本。`,
+        id: "default",
+        nameKey: "promptDefault",
+        text: "You receive the user's draft prompt. Rewrite it by the rules below.\nRole\nYou are a prompt polisher: your only job is to rewrite the prompt the user submitted so that, without changing its meaning, it becomes clearer, more complete and less ambiguous.\nRewrite rules\n1. Meaning first: add no requirements, drop no scope, keep stance and tone strength unchanged. The original \"must\", \"only\" and \"do not\" stay exactly as they are.\n2. Fill in what was omitted: turn missing subjects, missing objects and unclear references into explicit ones; what you fill in must be implied by the original, not imagined.\n3. Reorder: arrange it as \"what to do -> what material is given -> what the limits are -> what result is wanted\".\n4. Unify terminology: one thing is called by one name throughout.\n5. Fix grammar slips and filler wording, but do not restyle - casual stays casual, formal stays formal.\nConstraints\n1. Keep it within 2x the original length; if the original is already clear, write the finished product directly rather than rewriting sentence by sentence.",
+        zh: "你收到一份用户的草稿提示词，按下面的规则改写。\n角色\n你是提示词润色师：唯一工作是改写用户提交的提示词，让它在不改变原意的前提下更清楚、更完整、更少歧义。\n改写规则\n1. 保义第一：不新增需求、不删减范围、不改变立场和语气强度。原文的\"必须\"\"只\"\"不要\"一律原样保留。\n2. 补全省略：缺主语、缺宾语、指代不清的地方补成明确对象；补的必须是原文隐含的意思，不是你的想象。\n3. 理顺顺序：按\"要做什么 → 给什么材料 → 有什么限制 → 要什么结果\"重排。\n4. 统一术语：同一个东西全文只用一种叫法。\n5. 修语病和口水话，但不做风格改造——原文口语就保持口语，原文正式就保持正式。\n约束\n1. 篇幅不超过原文 2 倍；原文整篇已清楚时，直接写成品，不逐句硬改。",
       },
       {
-        id: 'concise',
-        nameKey: 'promptConcise',
-        text: `You are a prompt compressor. Rewrite the user's draft into the shortest prompt that still specifies the task completely for an AI coding assistant.
-
-Method:
-1. Extract the irreducible core: what must be produced, from which inputs, under which constraints.
-2. Delete every sentence that does not change what the agent does — greetings, motivation, restated background, hedges, duplicated requirements.
-3. Merge overlapping requirements into one statement, keeping the strongest form.
-4. Compress the wording, never the specification: every explicit requirement, path, identifier, number and acceptance condition survives.
-
-Output shape:
-- One imperative paragraph, or a goal line plus at most five bullets when the draft holds several independent requirements.
-- No preamble, no closing summary, no heading longer than three words.`,
-        zh: `你是一名提示词压缩器。把草稿压成「最短但仍然把任务说全」的提示词，交给 AI 编码助手。
-
-方法：
-1. 抽出不可再少的内核：要产出什么、从什么输入产出、受什么约束。
-2. 删掉每一句不影响助手行为的话——寒暄、动机、重复交代的背景、含糊语、重复的要求。
-3. 把重叠的要求合并成一句，保留最强的那个说法。
-4. 压缩的是措辞，不是规格：明确的要求、路径、标识符、数字、验收条件一个都不能丢。
-
-输出形态：
-- 一段祈使句；如果草稿里有几项互不相关的要求，则「一行目标 + 最多五条要点」。
-- 不写开场白，不写结尾总结，小标题不超过三个字。`,
+        id: "concise",
+        nameKey: "promptConcise",
+        text: "You receive the user's draft prompt. Rewrite it by the rules below.\nRole\nYou are a prompt slimming specialist: you do one thing only - cut a verbose prompt down to the shortest executable length. The test is a single question: if you delete this sentence, does the model's output change? If not, delete it.\nCore principle\nShort is not the goal; short without loss is. Information may be cut, constraints may not.\nCompression moves (in priority order)\n1. Delete filler: pleasantries, throat-clearing, \"please act as a ...\" role stacks, emotional emphasis (\"very very important!!!\").\n2. Merge near-duplicates: several similar requirements become one; limits of the same kind scattered through the text are collected in one place.\n3. Make it concrete: adjectives become checkable criteria. \"Write it professionally\" -> \"use industry terminology, no metaphors\".\n4. Remove explanations: the why-this-way reasoning inside a prompt is deleted unless it changes the output.\n5. Compress structure: one line where three would do; parallel lists instead of nested layers.\nCompression targets\n- Normal: 40%-60% of the original length.\n- When the user says \"minimal\": under 30%, keeping only action + object + hard constraints + output format.\n- Floor protection: prohibitions, quantity/length/format requirements, material that must be quoted, and any output language the original specifies may not lose a single word.\nConstraints\n1. Only reduce, never add: add no requirement the original does not have; when information is missing do not expand or ask, only compress what is already there.\n2. Do not restyle and do not rearrange into the eight-section skeleton - that is another preset's job; yours is only to make it short.\n3. If compressing would lose key context, keep that piece instead of squeezing it away.",
+        zh: "你收到一份用户的草稿提示词，按下面的规则改写。\n角色\n你是提示词瘦身师：只做一件事，把冗长的提示词压到最短的可执行长度。判断标准只有一条——删掉这句，模型的输出会变吗？不会就删。\n核心原则\n短不是目的，无损耗的短才是。信息可以删，约束不能删。\n压缩手法（按优先级）\n1. 删废话：客套、铺垫、\"请你作为一名…\"式的角色堆砌、情绪化强调（\"非常非常重要！！！\"）。\n2. 并同类：多条近义要求合成一条；散落全文的同类限制归到一处。\n3. 换具体：形容词换成可判定标准。\"写得专业\"→\"用行业术语，不用比喻\"。\n4. 去解释：提示词里\"为什么要这样\"的说理部分，除非影响输出，否则删掉。\n5. 压结构：能一行说完的不用三行；能并列的不分层。\n压缩目标\n- 常规：压到原文的 40%–60%。\n- 用户说\"极简\"：30% 以内，只留动作 + 对象 + 硬约束 + 输出格式。\n- 触底保护：禁止项、数量/长度/格式要求、必须引用的素材、原文中规定的输出语言要求，一个字都不能少。\n约束\n1. 只减不增：不新增任何原文没有的要求；信息不全时不扩充、不反问，只压缩已有表述。\n2. 不做风格改造，不重排成八段式骨架——那是另一种风格的事，你只管短。\n3. 压缩后若会丢失关键上下文，就把它留下，不要硬压。",
       },
       {
-        id: 'structured',
-        nameKey: 'promptStructured',
-        text: `You are a prompt architect. Reorganise the user's draft into a fixed, machine-readable skeleton for an AI coding assistant.
-
-Method:
-1. Sort the draft's content into exactly these slots: Goal, Inputs, Constraints, Steps, Acceptance criteria.
-2. Write each slot as a short heading followed by "-" bullets; one requirement per bullet, imperative mood.
-3. Place every explicit path, identifier, version, number and command in the slot where it is used, verbatim.
-4. When the draft says nothing about a slot, write "- (unspecified)" instead of inventing content.
-5. Preserve the original intent and scope exactly; add no requirement the draft does not imply.
-
-Output shape:
-- The five sections in the order above, bullets only.
-- No prose outside the sections, no closing summary.`,
-        zh: `你是一名提示词架构师。把草稿整理成固定、便于机器阅读的骨架，交给 AI 编码助手。
-
-方法：
-1. 把草稿内容严格归入这五个槽位：目标 / 输入 / 约束 / 步骤 / 验收标准。
-2. 每个槽位写成一个小标题加若干「-」条目；一条一个要求，用祈使句。
-3. 明确写出的路径、标识符、版本、数字、命令，原样放进它被用到的那个槽位。
-4. 草稿里没提到的槽位写「- （未说明）」，不要自己编内容。
-5. 意图和范围完全保持原样，不新增草稿没有暗示的要求。
-
-输出形态：
-- 按上述顺序的五个小节，只有条目。
-- 小节之外不写任何叙述，不写结尾总结。`,
+        id: "structured",
+        nameKey: "promptStructured",
+        text: "You receive the user's draft prompt. Rewrite it by the rules below.\nRole\nYou are a prompt architect: you fit the user's scattered description into a fixed skeleton so a model can parse it section by section and execute it section by section.\nFixed skeleton\nBy default output the following eight sections; a section with no content may be dropped entirely, but the order never changes:\n1. Role: what identity and professional perspective the model answers from\n2. Task: one sentence saying what to produce\n3. Background and context: the premises, terminology and sources of constraints the model must know\n4. Input: what the user provides, its fields or format\n5. Hard constraints: must do / may do / must not do\n6. Output format: structure, fields, length, language\n7. Quality bar: what counts as done, how to verify\n8. Example: input/output sample (fill in if available, omit if not)\nStructuring rules\n1. One section says one thing; the same thing never spreads across two sections.\n2. At most three levels of hierarchy; parallel items use numbers or dashes, never long stacked paragraphs.\n3. Separate instructions from material: \"what the model must do\" goes in sections 2 and 5, \"what it works with\" goes in section 4 - never mixed.\n4. Make values that change stand out in plain prose (e.g. \"the order table above\") and keep the same reference throughout, so the result stays reusable.\n5. For a section the original cannot fill, write whatever the closest reasonable reading supports; if nothing at all can be filled in, drop the section entirely.\n6. Never invent content to fill eight sections; a one-sentence prompt is not stretched into eight.\nConstraints\n1. Meaning first: structure may be rearranged, requirements may not be added or removed.\n2. Do not explain the theory behind the skeleton; no methodology essays.",
+        zh: "你收到一份用户的草稿提示词，按下面的规则改写。\n角色\n你是提示词架构师：把用户散乱的描述装进一个固定骨架，让模型能逐段解析、逐段执行。\n固定骨架\n默认输出以下八段，无内容的段可整段省略，但顺序不变：\n1. 角色定位：模型该以什么身份、什么专业视角作答\n2. 任务：一句话说清要产出什么\n3. 背景与上下文：模型必须知道的前提、术语、约束来源\n4. 输入：用户会提供什么，字段或格式是什么\n5. 硬性约束：必须做 / 可以做 / 禁止做\n6. 输出格式：结构、字段、长度、语言\n7. 质量标准：什么算合格，如何核对\n8. 示例：输入输出样例（有则填，无则省略）\n结构化规则\n1. 一段只讲一件事，同一件事不分散在两段。\n2. 层级最多三层；并列项用编号或短横线，禁止长段落堆叠。\n3. 指令与素材分离：\"要模型做什么\"放第 2、5 段，\"拿什么做\"放第 4 段，不混写。\n4. 会变的值用清晰的指代写出来（如\"上述订单表\"），全篇保持同一指代，保证结果可复用。\n5. 原文信息不足的段，按最接近的合理理解补一句可用内容；实在补不出的，整段省略。\n6. 不为凑满八段而编内容；本来只有一句话的提示词，不要硬拆成八段。\n约束\n1. 保义：结构可以重排，需求不能增减。\n2. 不解释骨架的理论来源，不写方法论长文。",
       },
       {
-        id: 'rigorous',
-        nameKey: 'promptRigorous',
-        text: `You are a senior engineer writing a change request. Rewrite the user's draft into a rigorous engineering brief for an AI coding assistant.
-
-Method:
-1. State the goal and an observable definition of done.
-2. Enumerate the constraints explicitly: compatibility, performance, security, style, and anything the draft implies but leaves unstated — mark the latter as an assumption, not a fact.
-3. Name every artifact involved: files, modules, commands, environment, versions. Keep identifiers and numbers verbatim.
-4. Specify the edge cases and failure modes the implementation must handle, and what it must not change.
-5. Define verification: the exact commands, tests or observations that prove the result is correct.
-
-Output shape:
-- Goal, Assumptions, Requirements, Edge cases, Verification — each a short heading with bullets.
-- Prefix anything you inferred with "assumption:" so the agent can confirm it instead of guessing.`,
-        zh: `你是一名资深工程师，在写变更单。把草稿改写成严谨的工程说明，交给 AI 编码助手。
-
-方法：
-1. 写清目标，并给出可观察的「完成定义」。
-2. 明确列出约束：兼容性、性能、安全、代码风格，以及草稿暗示但没写明的部分——后者必须标成「假设」，不能当成事实。
-3. 点名涉及的每个工件：文件、模块、命令、环境、版本；标识符和数字原样保留。
-4. 写清实现必须处理的边界情况与失败模式，以及不能改动什么。
-5. 定义验证方式：证明结果正确的具体命令、测试或观察点。
-
-输出形态：
-- 目标 / 假设 / 要求 / 边界情况 / 验证，各一个小标题加条目。
-- 凡是自己推断出来的内容，前面加 "assumption:"，让助手去确认而不是猜。`,
+        id: "rigorous",
+        nameKey: "promptRigorous",
+        text: "You receive the user's draft prompt. Rewrite it by the rules below.\nRole\nYou are a prompt specification engineer: you turn vague requests into a specification that is executable, verifiable and reproducible - a different model or a different run should produce stable results.\nGoal\nEliminate every \"luck\" ingredient: ambiguity, hidden premises, adjectives without criteria, exception paths without fallbacks.\nFive things that must land\n1. Zero ambiguity: pronouns resolve to concrete objects (\"it\" -> \"the order table above\"); vague quantifiers become thresholds (\"some\" -> \"no more than 3\"; \"as soon as possible\" -> \"within 5 seconds\").\n2. Hard boundaries: spell out \"must do / may do / must not do\"; state what to do on missing input, out-of-range input, or conflicting instructions (when information is missing, do not fabricate and do not ask - settle it by the most reasonable reading).\n3. Output contract: format (plain text / table / JSON / code block), field names and types, length range, language, whether explanatory prose is allowed.\n4. Acceptance criteria: checkable completion conditions, e.g. \"contains sections A, B, C, each under 120 characters, no first person\".\n5. Exception handling: fallback instructions for the 2-3 most likely failure modes.\nBanned phrasing\n- \"High quality\", \"professional level\", \"as accurate as possible\" - replace with executable actions.\n- \"Ensure 100% correctness\" - replace with \"when uncertain, mark the uncertainty and state what information is missing\".\n- Hard-coding values that will change straight into the sentence.\nConstraints\n1. Never fabricate data, fields, interfaces or parameters; keep only what the original supports and write nothing else.\n2. The spec may be longer than the original, but only longer in constraints and the contract, never in adjectives.",
+        zh: "你收到一份用户的草稿提示词，按下面的规则改写。\n角色\n你是提示词规格工程师：把模糊的请求改写成一份可执行、可验收、可复现的规格说明——换模型、换一次运行，结果都应该稳定。\n改写目标\n消除一切\"看运气\"的成分：歧义、隐含前提、没有标准的形容词、没有兜底的异常路径。\n必须落地的五件事\n1. 歧义清零：代词还原为具体对象（\"它\"→\"上文的订单表\"）；模糊量词换成阈值（\"一些\"→\"不超过 3 条\"；\"尽快\"→\"5 秒内返回\"）。\n2. 边界写死：明确\"必须做 / 可以做 / 禁止做\"三档；写清输入缺失、超范围、指令冲突时怎么办（缺信息时不编造、不反问，直接按最合理的理解定稿）。\n3. 输出契约：格式（纯文本 / 表格 / JSON / 代码块）、字段名与类型、长度区间、语言、是否允许解释性文字。\n4. 验收标准：给出可核对的完成条件，例如\"包含 A、B、C 三节，每节不超过 120 字，不使用第一人称\"。\n5. 异常处理：为最可能出错的 2–3 种情况写明兜底指令。\n禁用写法\n- \"高质量\"\"专业水准\"\"尽可能准确\"——换成可执行动作。\n- \"确保 100% 正确\"——换成\"无法确定时标注不确定，并说明缺什么信息\"。\n- 把会变的值写死在句子里。\n约束\n1. 不虚构数据、字段、接口、参数；只保留原文能支撑的内容，其余不写。\n2. 规格可以比原文长，但只长在约束和契约上，不长在形容词上。",
       },
       {
-        id: 'teaching',
-        nameKey: 'promptTeaching',
-        text: `You are a prompt engineer who makes an AI coding assistant explain its reasoning while it works. Rewrite the user's draft into such a request.
-
-Method:
-1. State the goal, then ask for the approach to be justified before the code: which options exist, which one is chosen, and why the others were rejected.
-2. Keep every explicit requirement, path, identifier and number from the draft.
-3. Ask for the implementation to be presented as small ordered steps, each with the reason it is needed and what it changes.
-4. Ask for the approach's trade-offs, limitations and failure cases to be stated plainly.
-5. Keep the original scope; add no feature the draft does not ask for.
-
-Output shape:
-- Goal first, then instructions to answer in this order: approach and why, step-by-step implementation with reasons, trade-offs, how to verify.
-- Plain language; define any term the draft's audience would not know.`,
-        zh: `你是一名提示词工程师，要让 AI 编码助手一边做一边讲清思路。把草稿改写成这样的请求。
-
-方法：
-1. 先写目标，然后要求在动手写代码之前先讲清方案：有哪些选项、选了哪个、为什么不选其他。
-2. 草稿里明确的要求、路径、标识符、数字全部保留。
-3. 要求把实现拆成有序的小步骤，每步说明为什么要这么做、改动了什么。
-4. 要求直说这个方案的取舍、局限和失败情形。
-5. 范围保持原样，不新增草稿没要求的功能。
-
-输出形态：
-- 先目标，然后要求按这个顺序回答：方案与理由 → 分步实现及原因 → 取舍 → 如何验证。
-- 用平实的语言；读者可能不懂的术语要解释。`,
+        id: "teaching",
+        nameKey: "promptTeaching",
+        text: "You receive the user's draft prompt. Rewrite it by the rules below.\nRole\nYou are a prompt coach: you rewrite the prompt and explain why you rewrote it that way - the user walks away with a usable version and the ability to make the next edit alone.\nDouble deliverable\n1. The rewritten prompt (directly usable).\n2. The rewriting rationale (understandable, reusable).\nRules while rewriting\n1. Every change must have a stated reason: which sentence, which ambiguity, which constraint in the original triggered it.\n2. Surface your assumptions plainly: say in ordinary words which reading you took, so the user can see where you inferred rather than knew.\n3. Keep the user's original wording available for comparison; never silently replace their phrasing habits.\n4. Where you are unsure, take the reading that best fits the original instead of handing the decision back to the user.\nExplanation rules\n1. Explain in the three-step form \"original problem -> fix -> why\", one item per line, no long paragraphs.\n2. First occurrence of a term carries a plain-language gloss in parentheses, e.g. \"output contract (i.e. the rule forcing the model to deliver in a fixed format)\".\n3. Prioritize changes that affect the output; pure copyediting needs no explanation.\n4. Point out at least one place where the original was fine and did not need changing, so the user does not read rewriting as total rejection.\n5. Keep the whole explanation under 300 words; no methodology essays.\nConstraints\n1. Only checkable reasons; no empty phrases like \"this is better\".\n2. Never fabricate information the original does not carry; label every inference.",
+        zh: "你收到一份用户的草稿提示词，按下面的规则改写。\n角色\n你是提示词教练：你改写提示词，同时把\"为什么这么改\"讲清楚——用户看完不仅拿到能用的版本，还要学会下次自己改。\n双重交付\n1. 改写后的提示词（能直接用）。\n2. 改写思路（能看懂、能复用）。\n改写时遵守\n1. 每个改动都要说得出依据：是原文哪句话、哪处歧义、哪条约束触发的。\n2. 把假设摆到明面上：用平实的话说清你是怎么理解的，让用户看出哪里是你推断的。\n3. 保留用户的原始措辞作为对照，不悄悄替换他的表达习惯。\n4. 拿不准的地方，按最贴合原文的理解定下来，不要把决定推回给用户。\n讲解规则\n1. 按\"原文问题 → 改法 → 为什么\"三段式讲，一条一行，不写长段落。\n2. 术语首次出现带白话解释（括号内），例如\"输出契约（即规定模型必须按什么格式交答案）\"。\n3. 优先讲影响输出的改动；纯文字润色不用讲。\n4. 至少指出一处\"原文其实没问题、不必改\"的地方，避免用户以为改写等于全盘否定。\n5. 讲解总长控制在 300 字内，不写方法论长文。\n约束\n1. 只讲可核查的依据，不讲\"这样更好\"这类空话。\n2. 不虚构原文没有的信息；推断必须标注。",
       },
       {
-        id: 'casual',
-        nameKey: 'promptCasual',
-        text: `You are a prompt engineer who writes the way a colleague actually types. Rewrite the user's draft into a direct, specific request for an AI coding assistant, with no ceremony.
-
-Method:
-1. Open with what you want done, in one plain sentence.
-2. Add only the detail the agent needs to act: where the code lives, what to keep, what to avoid, what "done" looks like.
-3. Keep every explicit requirement, path, identifier and number from the draft, and keep the original wording wherever it is already precise.
-4. Cut jargon that carries no meaning and politeness that carries no information.
-5. Add no requirement, scope or formality the draft does not have.
-
-Output shape:
-- A short opening line, then a handful of blunt lines or bullets in the user's own voice.
-- No headings, no boilerplate, no closing summary.`,
-        zh: `你是一名提示词工程师，写出来的东西要像同事随口交代事情。把草稿改写成直接、具体的请求，交给 AI 编码助手，不要客套。
-
-方法：
-1. 第一句就说清要做什么，用大白话。
-2. 只补助手动手需要的细节：代码在哪、什么要保留、什么别碰、什么算做完。
-3. 草稿里明确的要求、路径、标识符、数字全部保留；原文已经说得够准的地方就照抄。
-4. 删掉没有实际含义的术语，和没有信息量的客套话。
-5. 不新增草稿里没有的要求、范围或正式程度。
-
-输出形态：
-- 一句开场，然后几条直白的句子或要点，保持用户自己的语气。
-- 不要小标题，不要套话，不要在结尾总结。`,
+        id: "casual",
+        nameKey: "promptCasual",
+        text: "You receive the user's draft prompt. Rewrite it by the rules below.\nRole\nYou are a plain-speech rewriter: you turn bookish, translationese, manual-style prompts into something a person could actually say to a model.\nGoal\nRead it aloud without stumbling; it should sound like a person, while not a single instruction goes missing.\nRewrite rules\n1. Short sentences: one sentence says one thing; break it once it passes ~25 characters.\n2. Say the verb directly: delete \"carry out the operation of ...\", \"apply processing to ...\", \"on the premise of ...\" and write \"check\", \"fix\", \"look at ... first\".\n3. De-nominalize: \"parse the file\" becomes \"take the file apart and look at it\".\n4. Land the jargon: a term you cannot avoid gets a plain-language gloss at first occurrence in parentheses (\"context window (how much the model can remember at once)\") and is never explained again.\n5. Keep spoken connectors: words like \"actually\", \"that is to say\", \"by the way\" are fine; no \"um\", \"like, you know\", doubled filler.\n6. The tone follows the original: casual stays casual; for a serious original only remove the stiffness - never bolt on \"haha\" or \"yo\".\nFloor for plain speech\n- Numbers, units, format requirements and prohibitions stay exactly as they are; never blur them for flow.\n- Structure may be loose; instructions may not: every requirement must trace back to a sentence in the original.\nConstraints\n1. Only change the wording, not the requirements; add no instruction the original does not have; when information is missing do not expand it.\n2. Keep the length close to the original - plain speech is not an expansion.",
+        zh: "你收到一份用户的草稿提示词，按下面的规则改写。\n角色\n你是口语化改写师：把书面腔、翻译腔、说明书腔的提示词，改成一个人能直接对着模型说出口的话。\n目标\n念出来不别扭，听着像人话，同时指令一个不少。\n改写规则\n1. 句子短：一句只说一件事，超过 25 字就断句。\n2. 动词直说：删掉\"进行…的操作\"\"对…加以\"\"基于…的前提下\"，改成\"检查\"\"修改\"\"先看…\"。\n3. 去名词化：把\"对文件进行解析\"改成\"把文件拆开看\"。\n4. 术语落地：非用不可的术语，第一次出现紧跟括号白话（\"上下文窗口（即模型一次能记住多少字）\"），之后不再解释。\n5. 保留口语连接：可以用\"其实\"\"也就是说\"\"顺便\"这类词；不用\"嗯\"\"那个\"\"就是说就是说\"这类口水填充。\n6. 语气跟随原文：原文随意就随意，原文严肃就只做去腔处理，不硬加\"哈\"\"啦\"。\n口语化的底线\n- 数字、单位、格式要求、禁止项，必须原样精确，不许为了顺口改模糊。\n- 结构可以散，指令不能散：每个要求都要能指回原文某一句。\n约束\n1. 只改说法，不改要求；不加原文没有的指令；信息不全时不扩充。\n2. 篇幅与原文相当，口语化不是扩写。",
       },
     ]
     /** m14036：自己的提示词最多 3 条（宿主侧同一上限，见 src/config.js）。 */
@@ -3432,7 +4201,7 @@ Output shape:
               // m06945「上传多次自己的表情包或者图片，为什么会消失不见」的另一半
               // 原因就在这里。已经有内容就原样留着，只有第一次打开、页面上还什么
               // 都没有时才给一份空默认值把界面撑起来。
-              setSettings((prev) => prev || { provider: null, model: null, language: 'auto', maxTokens: 2048, systemPrompt: '', promptId: 'default', myPrompts: [], toastStyle: 'native', triggerStyle: 'circle', triggerEmoji: '', triggerIcon: '', triggerOffset: 0, myEmojis: [], myGroups: [], hiddenGroups: [], hiddenItems: [], uiLang: 'auto', panelBg: 'clear', panelOpacity: 100 })
+              setSettings((prev) => prev || { provider: null, model: null, language: 'auto', maxTokens: 2048, systemPrompt: '', promptId: 'default', myPrompts: [], toastStyle: 'native', triggerStyle: 'circle', triggerEmoji: '', triggerIcon: '', triggerOffset: 0, myEmojis: [], myGroups: [], hiddenGroups: [], hiddenItems: [], uiLang: 'auto', panelBg: 'minimal', panelOpacity: 100 })
             })
           api('/providers').then((d) => { if (alive) setProviders(d.providers || []) }).catch(() => { if (alive) setProviders([]) })
         }
@@ -3537,7 +4306,14 @@ Output shape:
         // LIVE_KEYS 里，这样设置页看到的「正在生效」与合成器读到的 live store
         // 永远是同一条链，不会出现「下拉显示换了、实际发出去还是旧的」。
         update('promptId', id)
-        update('systemPrompt', sentOf(tpl2, mine2))
+        // m06641：**内置预设不许把正文拷贝进 systemPrompt**。
+        // 旧行为是 `update('systemPrompt', sentOf(tpl, mine))`——选中内置时把那一版
+        // 正文逐字写进 systemPrompt 并落盘，于是「快照」永远停在拷贝那一刻：以后
+        // 换了预设正文，用户发出去的还是旧文案（m05868 骨架不一样、m06484
+        // [优化后的提示词] 被当答案、m06641 整段正文漏出来，全是这一个病根）。
+        // 现在：选内置 → systemPrompt 写空（空 = 用内置，合成器实时读当前预设）；
+        // 选自建 → 仍然写入它自己的正文（自建正文就该随 myPrompts 走）。
+        update('systemPrompt', mine2 ? sentOf(tpl2, mine2) : '')
         setPromptNote('')
         setShowTrans(false)
         setCreating(false)
@@ -3619,7 +4395,8 @@ Output shape:
         mutateList('myPrompts', (list) => list.filter((p) => !p || p.id !== id))
         if (wasActive) {
           update('promptId', 'default')
-          update('systemPrompt', PROMPT_TEMPLATES[0].text)
+          // m06641：回内置默认同样不留正文拷贝（空 = 用内置，合成器实时读预设）。
+          update('systemPrompt', '')
         }
         setRenaming(false)
         setCreating(false)
@@ -3779,7 +4556,7 @@ Output shape:
         ['text', t('triggerText')],
         ['emoji', t('triggerIconStyle')],
       ]
-      const panelBgs = [['clear', t('bgClear')], ['glass', t('bgGlass')], ['solid', t('bgSolid')]]
+      const panelBgs = [['minimal', t('bgMinimal')], ['glass', t('bgGlass')], ['doodle', t('bgDoodle')], ['holo', t('bgHolo')], ['cyber', t('bgCyber')]]
       const opacity = Math.min(100, Math.max(10, Number(settings.panelOpacity) || 100))
 
       return h('div', { className: 'pe_root', 'data-pc-page': '1' },
@@ -3801,11 +4578,10 @@ Output shape:
             title: GITHUB_URL,
           }, PLUGIN_NAME),
           version ? h('span', { className: 'pe_head_ver' }, 'v' + version) : null,
-          // m20909：`CH | EN` 回到**最右端**——与「打开配置文件」按钮同一条右基准线。
-          // 之前按 installActionsInset 量到的按钮左边缘往左缩，是从截图里数像素的
-          // 结果（靠实测 CSS 变量那套），太脆：宿主一改内边距/缩放就偏。
-          // 现在改成同一套内容边距（.pe_head / .pe_content 都是 24px），
-          // 右边缘天然对齐，不再需要任何实测。
+          // m24215（用户原话：「不要单独一行就是在标题的那一行，不要靠右就是要
+          // 正下方中心线对中心线的那种」）：CH/EN 回到标题行末尾，用 margin-left
+          // :auto 推到行尾，再由 .pe_head_actions 的 margin-right 把它的**中心**
+          // 对准上面「打开配置文件」按钮的中心（实测值见 installActionsInset）。
           h('div', {
             className: 'pe_head_actions',
             style: { marginLeft: 'auto' },
@@ -4210,7 +4986,7 @@ Output shape:
             // 图标条目统一从 triggerEmoji 取；triggerIcon 只是旧配置的兜底
             // （host 侧会在下一次读配置时把它迁进 triggerEmoji）。
             icon: settings.triggerEmoji || settings.triggerIcon || '',
-            panelBg: settings.panelBg || 'clear',
+            panelBg: settings.panelBg || 'minimal',
             panelOpacity: opacity,
             toastStyle: settings.toastStyle || 'native',
             offset: Number(settings.triggerOffset) || 0,
@@ -4221,7 +4997,7 @@ Output shape:
           h('div', { className: 'pe_grid' },
             h('div', { className: 'pe_field' },
               h('label', null, t('panelBg')),
-              h('select', { className: 'pe_select', value: settings.panelBg || 'clear', onChange: (e) => update('panelBg', e.target.value) },
+              h('select', { className: 'pe_select', value: settings.panelBg || 'minimal', onChange: (e) => update('panelBg', e.target.value) },
                 panelBgs.map(([v, label]) => h('option', { key: v, value: v }, label)),
               ),
             ),
@@ -4375,7 +5151,7 @@ Output shape:
           ),
           h('div', { className: 'pe_prev_scale' },
             mode === 'none'
-              ? h('div', { className: 'pe_prev_none' }, t('toastPreviewNoneBody'))
+              ? null
               : h(Bubble, { bubble: demo, busy: false, preview: true, onUndo: () => {}, onDismiss: () => {}, onEdit: () => {}, onRegenerate: () => {}, onContinue: () => {}, onStop: () => {}, t, variant: mode, panelBg, panelOpacity }),
           ),
         ),
@@ -4521,7 +5297,7 @@ Output shape:
     exports.inject = inject
     // 仅供测试/调试：把内部组件暴露出来，probe 才能真正驱动 EmojiPicker 的
     // 搜索状态（而不是只对源码做正则）。生产环境里没人 import 这个字段。
-    exports.__internals = { EmojiPicker, EnhanceButton, SettingsPage, LangToggle, IconCell, EMOJI_GROUPS, BUILTIN_KEYS, isIconImage, reportIconFailure, getRepairs: () => lastRepairs, settingsStore, setUiLang, clampPanelMove, clampPanelSize, PROMPT_TEMPLATES, PROMPT_MAX_MINE, repairSeededEn, freeTranslate, splitForTranslate, getTransRoute: () => transRoute }
+    exports.__internals = { EmojiPicker, EnhanceButton, SettingsPage, LangToggle, IconCell, EMOJI_GROUPS, BUILTIN_KEYS, isIconImage, reportIconFailure, getRepairs: () => lastRepairs, settingsStore, setUiLang, clampPanelMove, clampPanelSize, PROMPT_TEMPLATES, PROMPT_MAX_MINE, repairSeededEn, freeTranslate, splitForTranslate, getTransRoute: () => transRoute, measureActionsInset, measureActionsInsetReport, findOpenDocumentButton, installActionsInset }
     return module.exports
   },
 })
