@@ -6,8 +6,6 @@
 
 **One click turns a rough draft into a 💪 ready-to-run prompt — short on detail? keep going 🔜; not what you wanted? regenerate 🔄. Every round is saved as a history version 🕐 you can jump back to ↩️, the result writes straight back to the composer, and every change is shown line by line. 🗺️ Show or hide the panel, 🎨 pick the prompt 🪄 button icon, 📍 move the button wherever you want it.**
 
-**🎨 Your button, your look**: six built-in icon packs (two emoji sets, one hand-drawn set, three animated GIF sets) plus any packs you build yourself.
-
 [![Version](https://img.shields.io/badge/version-1.1.1-4f7cff?style=flat-square)](https://github.com/Nihao7-L/dsh-prompt-chain/releases)
 [![License](https://img.shields.io/badge/license-MIT-3da639?style=flat-square)](./LICENSE)
 [![DSH](https://img.shields.io/badge/DSH-0.2.x-8b5cf6?style=flat-square)](#compatibility)
